@@ -59,7 +59,7 @@ public class Application {
     }
 
     private static void initProperties() {
-        final var active = System.getProperty("profiles.active");
+        final var active = System.getenv("profiles.active");
         String filePath;
         if(active != null && !active.isBlank()){
             LOGGER.info("profiles.active: {}", active);
