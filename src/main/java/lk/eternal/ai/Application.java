@@ -3,7 +3,6 @@ package lk.eternal.ai;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-import lk.eternal.ai.model.CmdModel;
 import lk.eternal.ai.model.Model;
 import lk.eternal.ai.model.PromptModel;
 import lk.eternal.ai.service.CalcService;
@@ -27,10 +26,10 @@ public class Application {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         initProperties();
 
-        Model model = new CmdModel(new ChatGPT4Service(System.getProperty("openai.key")));
+        Model model = new PromptModel(new ChatGPT4Service(System.getProperty("openai.key")));
         model.addService(new CalcService());
         model.addService(new SqlService());
-        model.addService(new HttpService());
+//        model.addService(new HttpService());
 
         HttpServer server = HttpServer.create(new InetSocketAddress(80), 0);
         server.createContext("/api", t -> {

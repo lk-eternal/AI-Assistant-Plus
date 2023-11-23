@@ -25,6 +25,7 @@ public class ChatGPT4Service {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatGPT4Service.class);
 
+//    private final static String OPENAI_API_URL = "https://ai-next.wukongedu.net/api/openai/v1/chat/completions";
     private final static String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
     private final static HttpClient HTTP_CLIENT = HttpClient.newBuilder()
