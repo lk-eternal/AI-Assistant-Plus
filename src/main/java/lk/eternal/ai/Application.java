@@ -9,17 +9,24 @@ import lk.eternal.ai.service.CalcService;
 import lk.eternal.ai.service.ChatGPT4Service;
 import lk.eternal.ai.service.HttpService;
 import lk.eternal.ai.service.SqlService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.util.Properties;
 
 public class Application {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        Model model = new PromptModel(new ChatGPT4Service("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"));
+        initProperties();
+
+        Model model = new PromptModel(new ChatGPT4Service(System.getProperty("openai.key")));
         model.addService(new CalcService());
         model.addService(new SqlService());
         model.addService(new HttpService());
@@ -49,6 +56,34 @@ public class Application {
 
         server.setExecutor(null);
         server.start();
+    }
+
+    private static void initProperties() {
+        final var active = System.getProperty("profiles.active");
+        String filePath;
+        if(active != null && !active.isBlank()){
+            LOGGER.info("profiles.active: {}", active);
+            filePath = "application-" + active + ".properties";
+        }else{
+            filePath = "application.properties";
+        }
+        ClassLoader classLoader = Application.class.getClassLoader();
+        final var properties = new Properties();
+        final var resource = classLoader.getResource(filePath);
+        if (resource == null) {
+            LOGGER.warn("Not found application.properties");
+            return;
+        }
+        try (FileInputStream fileInputStream = new FileInputStream(resource.getFile())) {
+            properties.load(fileInputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // 遍历所有属性并将其添加到系统属性中
+        for (String key : properties.stringPropertyNames()) {
+            String value = properties.getProperty(key);
+            System.setProperty(key, value);
+        }
     }
 
     static class ResourceHandler implements HttpHandler {

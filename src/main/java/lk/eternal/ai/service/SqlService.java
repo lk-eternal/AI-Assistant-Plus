@@ -6,14 +6,15 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 
 public class SqlService implements Service {
-    //    private static final String DB_URL = "jdbc:postgresql://localhost:5432/ai_test";
-    private static final String DB_URL = "jdbc:postgresql://wk-perf-test-public.pgsql.cn-chengdu.rds.aliyuncs.com:1921/cp-scheduling-test";
-    private static final String DB_USER = "wukong_test";
-    private static final String DB_PASSWORD = "wukongd";
-
+    private final String dbUrl;
+    private final String dbUser;
+    private final String dbPassword;
 
     public SqlService() throws ClassNotFoundException {
         Class.forName("org.postgresql.Driver");
+        dbUrl = System.getProperty("db.url");
+        dbUser = System.getProperty("db.username");
+        dbPassword = System.getProperty("db.password");
     }
 
     @Override
@@ -27,7 +28,7 @@ public class SqlService implements Service {
     }
 
     public String execute(String sql) {
-        try (final var connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        try (final var connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
              final var statement = connection.prepareStatement(sql)) {
             boolean isResultSet = statement.execute();  // 执行 SQL 语句
 
