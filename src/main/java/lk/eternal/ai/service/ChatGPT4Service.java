@@ -25,11 +25,11 @@ public class ChatGPT4Service {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatGPT4Service.class);
 
-    private final static String OPENAI_API_URL = "https://openai-api.wukongedu.net/v1/chat/completions";
+    private final static String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
     private final static HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
-//            .proxy(ProxySelector.of(new InetSocketAddress("127.0.0.1", 1080)))
+            .proxy(ProxySelector.of(new InetSocketAddress("127.0.0.1", 1080)))
             .connectTimeout(Duration.ofMinutes(1))
             .build();
 
@@ -65,6 +65,6 @@ public class ChatGPT4Service {
                 .map(cs -> cs.get(0))
                 .map(ChatCompletion.Choice::getMessage)
                 .map(ChatCompletion.Message::getContent)
-                .orElse(null);
+                .orElse(response.body());
     }
 }

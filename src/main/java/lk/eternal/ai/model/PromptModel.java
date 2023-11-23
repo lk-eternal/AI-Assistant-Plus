@@ -46,8 +46,6 @@ public class PromptModel implements Model {
 
     private static final LinkedList<Message> messages = new LinkedList<>();
 
-    private StringBuilder messageBuilder;
-
     private final ChatGPT4Service chatGPT4Service;
     private final Map<String, Service> serviceMap;
 
