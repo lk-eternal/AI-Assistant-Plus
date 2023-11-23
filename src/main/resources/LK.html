@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Chat Interface</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 90vh;
+            flex-direction: column;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        #chatbox {
+            width: 60%;
+            height: 60%;
+            border: 3px solid green;
+            background-color: white;
+            border: 1px solid black;
+            padding: 10px;
+            overflow-y: scroll;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        #inputbox {
+			width: 400px;
+			height: 40px;
+			border: 1px solid #ccc;
+			border-radius: 5px;
+			padding: 5px;
+			margin: 10px 0;
+		}
+
+        button {
+            background-color: #4CAF50;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 0;
+            color: white;
+            font-size: 16px;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #3e8e41;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.4);
+            transform: scale(1.1);
+            transition: all 0.3s;
+        }
+
+        p {
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 5px;
+            margin: 5px 0;
+            width: fit-content;
+        }
+
+        p:nth-child(odd) {
+            background-color: #f1f0f0;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            text-align: right;
+        }
+
+        p:nth-child(even) {
+            background-color: #009688;
+            color: white;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            text-align: left;
+        }
+		.button-container {
+			display: flex;
+			justify-content: space-between;
+			width: 300px;
+			margin-top: 10px;
+		}
+    </style>
+</head>
+
+<body>
+    <div id="chatbox">
+        <p>有何贵干?</p>
+    </div>
+    <input id="inputbox" type="text" placeholder="Type your message here...">
+	<div class="button-container">
+		<button onclick="clearMessages()">Clear Messages</button>
+		<button onclick="sendMessage()">Send</button>
+	</div>
+    <script>
+	
+		function clearMessages() {
+			var chatbox = document.getElementById('chatbox');
+			chatbox.innerHTML = '';
+		}
+		document.getElementById('inputbox').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+		
+		var isWaitingForResponse = false;
+		
+        async function sendMessage() {
+			if (isWaitingForResponse) {
+				return;
+			}
+	
+            var inputbox = document.getElementById('inputbox');
+            var chatbox = document.getElementById('chatbox');
+            var message = inputbox.value;
+            inputbox.value = '';
+            chatbox.innerHTML += '<p>' + message + '</p>';
+
+			isWaitingForResponse = true;
+            // Send 'message' to your server and get the response
+            var response = await fetch('/api', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain'
+                },
+                body: message
+            });
+
+            if (response.ok) {
+                var data = await response.text();
+                chatbox.innerHTML += '<p>' + data + '</p>';
+            } else {
+                console.error('Error:', response.status, response.statusText);
+            }
+
+			isWaitingForResponse = false;
+        }
+
+    </script>
+</body>
+
+</html>
