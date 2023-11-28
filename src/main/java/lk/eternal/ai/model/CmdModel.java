@@ -2,6 +2,7 @@ package lk.eternal.ai.model;
 
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.service.ChatGPT4Service;
+import lk.eternal.ai.service.GPTService;
 import lk.eternal.ai.service.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,12 +74,12 @@ public class CmdModel implements Model{
 
     private static final LinkedList<Message> messages = new LinkedList<>();
 
-    private final ChatGPT4Service chatGPT4Service;
+    private final GPTService gptService;
     private final Map<String, Service> serviceMap;
 
-    public CmdModel(ChatGPT4Service chatGPT4Service) {
+    public CmdModel(GPTService gptService) {
         this.serviceMap = new HashMap<>();
-        this.chatGPT4Service = chatGPT4Service;
+        this.gptService = gptService;
     }
 
     @Override
@@ -117,7 +118,7 @@ public class CmdModel implements Model{
         }
         final var requestMessages = new LinkedList<>(messages);
         requestMessages.addFirst(prompt);
-        return this.chatGPT4Service.request(requestMessages);
+        return this.gptService.request(requestMessages);
     }
 
     private Message getPrompt() {

@@ -4,7 +4,6 @@ package lk.eternal.ai.service;
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.dto.req.Req;
 import lk.eternal.ai.dto.resp.ChatCompletion;
-import lk.eternal.ai.model.PromptModel;
 import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,11 +20,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-public class ChatGPT4Service implements GPTService{
+public class ChatGPT3_5Service implements GPTService{
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ChatGPT4Service.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChatGPT3_5Service.class);
 
-//    private final static String OPENAI_API_URL = "https://ai-next.wukongedu.net/api/openai/v1/chat/completions";
     private final static String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
     private final static HttpClient HTTP_CLIENT = HttpClient.newBuilder()
@@ -36,7 +34,7 @@ public class ChatGPT4Service implements GPTService{
 
     private final String openaiApiKey;
 
-    public ChatGPT4Service(String openaiApiKey) {
+    public ChatGPT3_5Service(String openaiApiKey) {
         this.openaiApiKey = openaiApiKey;
     }
 
@@ -46,7 +44,7 @@ public class ChatGPT4Service implements GPTService{
                 .uri(URI.create(OPENAI_API_URL))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + this.openaiApiKey)
-                .POST(HttpRequest.BodyPublishers.ofString(Mapper.writeAsStringNotError(new Req("gpt-4-1106-preview", stops, messages))))
+                .POST(HttpRequest.BodyPublishers.ofString(Mapper.writeAsStringNotError(new Req("gpt-3.5-turbo", stops, messages))))
                 .build();
 
         final HttpResponse<String> response;
@@ -65,4 +63,5 @@ public class ChatGPT4Service implements GPTService{
                 .map(ChatCompletion.Message::getContent)
                 .orElse(response.body());
     }
+
 }

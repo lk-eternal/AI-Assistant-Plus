@@ -3,6 +3,7 @@ package lk.eternal.ai.model;
 
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.service.ChatGPT4Service;
+import lk.eternal.ai.service.GPTService;
 import lk.eternal.ai.service.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,17 +27,13 @@ public class PromptModel implements Model {
             你可以使用以下的工具:[(工具名和描述}]
             ${tools}
                         
-            必须严格使用以下格式回答:
-                        
-            问题: 你必须回答的问题
-                        
+            必须严格使用以下格式回答用户问题:{
             思考:你应该一直保持思考，思考要怎么解决问题
             动作:<工具名>,每次动作只选择一个工具,且只能填写工具名
-            输入:<调用工具时需要传入的参数>.
-            ...(然后等待系统的回复)
-            观察:<第三方工具返回的结果>
+            输入:<调用工具时需要传入的具体参数>
+            }
                         
-            ...(这个“思考/动作/输入/观察”的过程可以重复N次)
+            (这个“思考/动作/输入”的过程可以重复N次)
                         
             最终结果:针对于原始问题，输出最终结果，如果有引用来源需要加上引用地址
                         
@@ -46,12 +43,12 @@ public class PromptModel implements Model {
 
     private static final LinkedList<Message> messages = new LinkedList<>();
 
-    private final ChatGPT4Service chatGPT4Service;
+    private final GPTService gptService;
     private final Map<String, Service> serviceMap;
 
-    public PromptModel(ChatGPT4Service chatGPT4Service) {
+    public PromptModel(GPTService gptService) {
         this.serviceMap = new HashMap<>();
-        this.chatGPT4Service = chatGPT4Service;
+        this.gptService = gptService;
     }
 
     @Override
@@ -95,7 +92,7 @@ public class PromptModel implements Model {
         }
         final var requestMessages = new LinkedList<>(messages);
         requestMessages.addFirst(prompt);
-        return this.chatGPT4Service.request(requestMessages);
+        return this.gptService.request(requestMessages);
     }
 
     private Message getPrompt() {
@@ -113,6 +110,7 @@ public class PromptModel implements Model {
         try {
             result = this.serviceMap.get(cmd).execute(param);
         } catch (Exception e) {
+            LOGGER.error("System: error: {}", e.getMessage(), e);
             return "执行异常:" + e.getMessage();
         }
         LOGGER.info("System: {}", result);

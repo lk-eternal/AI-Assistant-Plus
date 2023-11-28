@@ -1,41 +1,117 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-cn">
 
 <head>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Chat Interface</title>
     <style>
         body {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 90vh;
-            flex-direction: column;
             font-family: 'Roboto', sans-serif;
+            background-color: grey;
         }
 
-        #chatbox {
-            width: 60%;
+        .title{
+            font-size: 48px;
+            line-height: 1.5;
+            color: white;
+        }
+
+        .content{
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 50%;
             height: 60%;
-            border: 3px solid green;
+			border: 1px solid #ccc;
             background-color: white;
-            border: 1px solid black;
             padding: 10px;
-            overflow-y: scroll;
             box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
             border-radius: 10px;
         }
 
-        #inputbox {
-			width: 400px;
-			height: 40px;
-			border: 1px solid #ccc;
-			border-radius: 5px;
-			padding: 5px;
-			margin: 10px 0;
+        #chatBox {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 80%;
+			border: none;
+            background-color: white;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        #chatBox p {
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 5px;
+            margin: 5px 0;
+            width: fit-content;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        #chatBox p:nth-child(odd) {
+            background-color: #f1f0f0;
+            color: #333;
+            align-self: flex-start
+        }
+
+        #chatBox p:nth-child(even) {
+            background-color: #009688;
+            color: white;
+            align-self: flex-end
+        }
+
+        .toolBox {
+			display: flex;
+            flex-direction: row;
+			justify-content: space-between;
+			width: 100%;
 		}
 
-        button {
-            background-color: #4CAF50;
+		.toolBox button{
+			width: 30px;
+			height: 30px;
+			border: 1px solid #ccc;
+            border-radius: 5px;
+		}
+
+        #inputBox {
+            display: flex;
+            flex-direction: row;
+			height: 60px;
+            width: 100%;
+            margin: 5px;
+			border: 1px solid #ccc;
+			border-width: 1px 0 0 0;
+            background-color: white;
+            padding: 10px;
+            resize: none;
+            outline: none;
+		}
+
+		#inputBox textarea{
+			height: 100%;
+            width: 100%;
+			border: none;
+            background-color: white;
+            overflow-y: auto;
+            font-size: 14px;
+            font-family: 'Roboto', sans-serif;
+            resize: none;
+            outline: none;
+            border: none;
+		}
+
+		#inputBox button {
+            background-color: #009688;
             border: none;
             padding: 10px 20px;
             margin: 10px 0;
@@ -44,83 +120,67 @@
             box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
             border-radius: 5px;
             cursor: pointer;
+            border: none;
         }
 
         button:hover {
-            background-color: #3e8e41;
             box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.4);
-            transform: scale(1.1);
-            transition: all 0.3s;
+            transform: scale(1.05);
+            transition: all 0.2s;
         }
 
-        p {
-            font-size: 14px;
-            line-height: 1.5;
-            padding: 5px;
-            margin: 5px 0;
-            width: fit-content;
-        }
 
-        p:nth-child(odd) {
-            background-color: #f1f0f0;
-            color: #333;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            text-align: right;
-        }
-
-        p:nth-child(even) {
-            background-color: #009688;
-            color: white;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            text-align: left;
-        }
-		.button-container {
-			display: flex;
-			justify-content: space-between;
-			width: 300px;
-			margin-top: 10px;
-		}
     </style>
 </head>
 
 <body>
-    <div id="chatbox">
-        <p>有何贵干?</p>
+    <h1 class="title">AI Assistant Plus</h1>
+    <div class="content">
+        <div id="chatBox">
+            <p>有何贵干?</p>
+        </div>
+        <div class="toolBox">
+            <button onclick="clearMessages()" title="Clear Messages">
+                <svg viewBox="0 0 24 24" fill="#999" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19.54 3.66c-.13-.49-.45-.9-.89-1.16-.44-.26-.95-.32-1.45-.19-.49.13-.9.45-1.16.89l-3.48 6.03L10.42 8a.738.738 0 0 0-1.02.27L8.28 10.2c-.1.17-.13.38-.08.57.05.19.18.36.35.46l.31.18c-2.21 2.1-6.06 3.64-6.1 3.66-.26.1-.45.35-.47.63-.03.28.11.55.35.7l2.01 1.25c.19.12.42.15.63.08.03-.01.48-.16 1.07-.42-.1.15-.18.24-.18.24-.15.16-.22.39-.2.61.03.22.16.42.35.54l4.99 3.1c.12.08.26.11.4.11.16 0 .32-.05.45-.15.11-.09 2.63-2.04 3.74-6.29l.31.18a.746.746 0 0 0 1.02-.27l1.12-1.93c.1-.17.13-.38.08-.57a.77.77 0 0 0-.35-.46l-2.21-1.27 3.48-6.03c.25-.45.32-.97.19-1.46Zm-7.91 16.56-3.84-2.39c.28-.49.59-1.2.65-2.07a.758.758 0 0 0-.38-.71.747.747 0 0 0-.8.04c-.74.52-1.65.91-2.13 1.09l-.49-.3c1.51-.71 3.96-2.04 5.56-3.7l4.33 2.5c-.69 3.03-2.2 4.84-2.9 5.54Zm4.68-6.26L9.96 10.3l.36-.63 4.15 2.39 2.2 1.27-.36.63Zm1.74-9.6-3.48 6.03-.7-.4 3.48-6.03c.11-.19.36-.26.55-.15a.405.405 0 0 1 .15.55ZM16.75 21.14a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5ZM19 17.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM20.25 19.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"/>
+                </svg>
+            </button>
+        </div>
+        <div id="inputBox">
+            <textarea placeholder="今天天气怎么样?"></textarea>
+            <button id="sendBtn" onclick="sendMessage()">Send</button>
+        </div>
+
     </div>
-    <input id="inputbox" type="text" placeholder="Type your message here...">
-	<div class="button-container">
-		<button onclick="clearMessages()">Clear Messages</button>
-		<button onclick="sendMessage()">Send</button>
-	</div>
     <script>
-	
+
+		var inputBox = document.getElementById('inputBox');
+		var chatBox = document.getElementById('chatBox');
+		var sendBtn = document.getElementById('sendBtn');
+
+
 		function clearMessages() {
-			var chatbox = document.getElementById('chatbox');
-			chatbox.innerHTML = '';
+			chatBox.innerHTML = '';
 		}
-		document.getElementById('inputbox').addEventListener('keydown', function(event) {
+
+		inputBox.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 sendMessage();
             }
         });
-		
-		var isWaitingForResponse = false;
-		
+
         async function sendMessage() {
-			if (isWaitingForResponse) {
-				return;
-			}
-	
-            var inputbox = document.getElementById('inputbox');
-            var chatbox = document.getElementById('chatbox');
-            var message = inputbox.value;
-            inputbox.value = '';
-            chatbox.innerHTML += '<p>' + message + '</p>';
+            var message = inputBox.value;
+            if(message == undefined || message == ''){
+                return;
+            }
+            chatBox.innerHTML += '<p>' + message + '</p>';
+            inputBox.value = '';
 
 			isWaitingForResponse = true;
-            // Send 'message' to your server and get the response
+			inputBox.disabled = true;
+			sendBtn.disabled = true;
+
             var response = await fetch('/api', {
                 method: 'POST',
                 headers: {
@@ -131,12 +191,14 @@
 
             if (response.ok) {
                 var data = await response.text();
-                chatbox.innerHTML += '<p>' + data + '</p>';
+                chatBox.innerHTML += '<p>' + data + '</p>';
             } else {
                 console.error('Error:', response.status, response.statusText);
+                chatBox.innerHTML += '<p>' + response.status + ':' + response.statusText + '</p>';
             }
 
-			isWaitingForResponse = false;
+			inputBox.disabled = false;
+			sendBtn.disabled = false;
         }
 
     </script>
