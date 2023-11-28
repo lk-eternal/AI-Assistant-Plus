@@ -44,7 +44,7 @@ public class ChatGPT3_5Service implements GPTService{
                 .uri(URI.create(OPENAI_API_URL))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + this.openaiApiKey)
-                .POST(HttpRequest.BodyPublishers.ofString(Mapper.writeAsStringNotError(new Req("gpt-3.5-turbo", stops, messages))))
+                .POST(HttpRequest.BodyPublishers.ofString(Mapper.writeAsStringNotError(new Req("gpt-3.5-turbo-1106", stops, messages))))
                 .build();
 
         final HttpResponse<String> response;

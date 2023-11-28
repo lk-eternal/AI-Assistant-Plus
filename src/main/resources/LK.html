@@ -83,7 +83,7 @@
             border-radius: 5px;
 		}
 
-        #inputBox {
+        .inputBox {
             display: flex;
             flex-direction: row;
 			height: 60px;
@@ -97,7 +97,7 @@
             outline: none;
 		}
 
-		#inputBox textarea{
+		.inputBox textarea{
 			height: 100%;
             width: 100%;
 			border: none;
@@ -110,7 +110,7 @@
             border: none;
 		}
 
-		#inputBox button {
+		.inputBox button {
             background-color: #009688;
             border: none;
             padding: 10px 20px;
@@ -146,15 +146,15 @@
                 </svg>
             </button>
         </div>
-        <div id="inputBox">
-            <textarea placeholder="今天天气怎么样?"></textarea>
+        <div class="inputBox">
+            <textarea id="inputTextArea" placeholder="今天天气怎么样?"></textarea>
             <button id="sendBtn" onclick="sendMessage()">Send</button>
         </div>
 
     </div>
     <script>
 
-		var inputBox = document.getElementById('inputBox');
+		var inputTextArea = document.getElementById('inputTextArea');
 		var chatBox = document.getElementById('chatBox');
 		var sendBtn = document.getElementById('sendBtn');
 
@@ -163,22 +163,22 @@
 			chatBox.innerHTML = '';
 		}
 
-		inputBox.addEventListener('keydown', function(event) {
+		inputTextArea.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 sendMessage();
             }
         });
 
         async function sendMessage() {
-            var message = inputBox.value;
+            var message = inputTextArea.value;
             if(message == undefined || message == ''){
                 return;
             }
             chatBox.innerHTML += '<p>' + message + '</p>';
-            inputBox.value = '';
+            inputTextArea.value = '';
 
 			isWaitingForResponse = true;
-			inputBox.disabled = true;
+			inputTextArea.disabled = true;
 			sendBtn.disabled = true;
 
             var response = await fetch('/api', {
@@ -197,7 +197,7 @@
                 chatBox.innerHTML += '<p>' + response.status + ':' + response.statusText + '</p>';
             }
 
-			inputBox.disabled = false;
+			inputTextArea.disabled = false;
 			sendBtn.disabled = false;
         }
 
