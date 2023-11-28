@@ -2,7 +2,6 @@ package lk.eternal.ai.model;
 
 
 import lk.eternal.ai.dto.req.Message;
-import lk.eternal.ai.service.ChatGPT4Service;
 import lk.eternal.ai.service.GPTService;
 import lk.eternal.ai.service.Service;
 import org.slf4j.Logger;
@@ -27,23 +26,26 @@ public class PromptModel implements Model {
             你可以使用以下的工具:[(工具名和描述}]
             ${tools}
             
-            必须严格使用以下格式回答用户问题:
-            思考:你应该一直保持思考，思考要怎么解决问题
-            动作:<工具名>,每次动作只选择一个工具,且只能填写工具名
-            输入:<调用工具时需要传入的具体参数>
+            必须严格使用以下格式回答用户问题(括号中的内容是注意事项):
+            思考:你应该一直保持思考,思考要怎么解决问题
+            动作:<工具名>(每次动作只选择一个工具,且只能填写工具名)
+            输入:(调用工具时需要传入的具体参数)
+            (停止回复)
+            (然后等待系统给出工具的响应结果)
+            (系统响应后可以重复这个“思考/动作/输入/等待响应结果”的过程,或者给出最终结果)
             
-            (然后等待系统给出工具的响应结果,系统响应后可以重复这个“思考/动作/输入”的过程,或者给出最终结果)
-            
-            最终结果:针对于原始问题，输出最终结果，如果有引用来源需要加上引用地址
+            最终结果:针对于原始问题,输出最终结果,如果有引用来源需要加上引用地址
             
             示例:
             用户:今天成都天气怎么样?
-            助手:思考: 查看成都的天气需要使用web工具查询网页内容.\\n动作: web\\n输入: http://www.weather.com.cn/weather/101270101.shtml
+            助手:思考: 查看成都的天气需要使用web工具查询网页内容.
+            动作: web
+            输入: http://www.weather.com.cn/weather/101270101.shtml
             系统:28日（今天） 多云 19/8℃
             助手:最终结果:今天成都多云,气温是8到19摄氏度.
             """;
 
-    private static final LinkedList<Message> messages = new LinkedList<>();
+    private final Map<String, List<Message>> sessionMessageMap = new HashMap<>();
 
     private final GPTService gptService;
     private final Map<String, Service> serviceMap;
@@ -59,10 +61,11 @@ public class PromptModel implements Model {
     }
 
     @Override
-    public String question(String question) {
+    public String question(String sessionId, String question) {
         LOGGER.info("User: {}", question);
+        final var messages = (LinkedList<Message>)sessionMessageMap.computeIfAbsent(sessionId, k -> new LinkedList<>());
         messages.addLast(Message.user(question));
-        var answer = request();
+        var answer = request(messages);
         while (true) {
             LOGGER.info("AI: {}", answer);
             final var answerMatcher = ANSWER_CHECK_PATTERN.matcher(answer);
@@ -77,7 +80,7 @@ public class PromptModel implements Model {
                 final var content = Optional.ofNullable(executeCmd(cmd, param)).filter(Predicate.not(String::isBlank)).orElse("无数据");
                 messages.addLast(Message.assistant(answer, true));
                 messages.addLast(Message.system(content, true));
-                answer = request();
+                answer = request(messages);
             } else {
                 break;
             }
@@ -87,7 +90,7 @@ public class PromptModel implements Model {
         return answer;
     }
 
-    private String request() {
+    private String request(LinkedList<Message> messages) {
         final var prompt = getPrompt();
         while (messages.size() > MAX_HISTORY || messages.stream().mapToInt(m -> m.content().length()).sum() > 128000 + prompt.content().length()) {
             messages.removeFirst();

@@ -1,5 +1,6 @@
 package lk.eternal.ai;
 
+import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
@@ -13,9 +14,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.HttpCookie;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
+import java.util.concurrent.Executors;
 
 public class Application {
     private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
@@ -29,14 +34,17 @@ public class Application {
         model.addService(new HttpService());
 
         HttpServer server = HttpServer.create(new InetSocketAddress(80), 0);
+        server.setExecutor(Executors.newFixedThreadPool(1000));
         server.createContext("/api", t -> {
             t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
             t.getResponseHeaders().add("Access-Control-Allow-Headers", "*");
             t.getResponseHeaders().add("Access-Control-Allow-Methods", "*");
 
             if (t.getRequestMethod().equalsIgnoreCase("post")) {
+                final var sessionId = getSessionIdFromCookie(t.getRequestHeaders());
                 final var body = new String(t.getRequestBody().readAllBytes());
-                final var answer = model.question(body);
+                final var answer = model.question(sessionId, body);
+                setSessionIdInCookie(t.getResponseHeaders(), sessionId);
                 t.sendResponseHeaders(200, answer.getBytes().length);
                 OutputStream os = t.getResponseBody();
                 os.write(answer.getBytes());
@@ -81,6 +89,31 @@ public class Application {
             String value = properties.getProperty(key);
             System.setProperty(key, value);
         }
+    }
+
+    private static String getSessionIdFromCookie(Headers requestHeaders) {
+        List<String> cookies = requestHeaders.get("Cookie");
+        if (cookies != null) {
+            for (String cookie : cookies) {
+                List<HttpCookie> httpCookies = HttpCookie.parse(cookie);
+                for (HttpCookie httpCookie : httpCookies) {
+                    if (httpCookie.getName().equals("sessionId")) {
+                        return httpCookie.getValue();
+                    }
+                }
+            }
+        }
+        return generateSessionId();
+    }
+
+    private static void setSessionIdInCookie(Headers responseHeaders, String sessionId) {
+        HttpCookie cookie = new HttpCookie("sessionId", sessionId);
+        cookie.setPath("/");
+        responseHeaders.add("Set-Cookie", cookie.toString());
+    }
+
+    private static String generateSessionId() {
+        return UUID.randomUUID().toString();
     }
 
     static class ResourceHandler implements HttpHandler {

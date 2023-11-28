@@ -5,7 +5,7 @@ import lk.eternal.ai.service.Service;
 
 public interface Model {
 
-    String question(String question);
+    String question(String sessionId, String question);
 
     void addService(Service service);
 }

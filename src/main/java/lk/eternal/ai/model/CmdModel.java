@@ -1,16 +1,12 @@
 package lk.eternal.ai.model;
 
 import lk.eternal.ai.dto.req.Message;
-import lk.eternal.ai.service.ChatGPT4Service;
 import lk.eternal.ai.service.GPTService;
 import lk.eternal.ai.service.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -72,7 +68,7 @@ public class CmdModel implements Model{
             """;
 
 
-    private static final LinkedList<Message> messages = new LinkedList<>();
+    private final Map<String, List<Message>> sessionMessageMap = new HashMap<>();
 
     private final GPTService gptService;
     private final Map<String, Service> serviceMap;
@@ -88,10 +84,11 @@ public class CmdModel implements Model{
     }
 
     @Override
-    public String question(String question) {
+    public String question(String sessionId, String question) {
         LOGGER.info("User: {}", question);
+        final var messages = (LinkedList<Message>)sessionMessageMap.computeIfAbsent(sessionId, k -> new LinkedList<>());
         messages.addLast(Message.user(question));
-        var answer = request();
+        var answer = request(messages);
         while (true) {
             LOGGER.info("AI: {}", answer);
             final var matcher = API_CHECK_PATTERN.matcher(answer);
@@ -101,7 +98,7 @@ public class CmdModel implements Model{
                 final var content = Optional.ofNullable(executeCmd(cmd, param)).filter(Predicate.not(String::isBlank)).orElse("无数据");
                 messages.addLast(Message.assistant(answer, true));
                 messages.addLast(Message.system(content, true));
-                answer = request();
+                answer = request(messages);
             } else {
                 break;
             }
@@ -111,7 +108,7 @@ public class CmdModel implements Model{
         return answer;
     }
 
-    private String request() {
+    private String request(LinkedList<Message> messages) {
         final var prompt = getPrompt();
         while (messages.size() > MAX_HISTORY || messages.stream().mapToInt(m -> m.content().length()).sum() > 128000 + prompt.content().length()) {
             messages.removeFirst();
