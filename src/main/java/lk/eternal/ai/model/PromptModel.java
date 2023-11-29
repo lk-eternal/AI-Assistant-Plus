@@ -47,10 +47,8 @@ public class PromptModel extends PluginModel {
     }
 
     @Override
-    public String question(String sessionId, String question) {
-        LOGGER.info("User: {}", question);
-        final var messages = (LinkedList<Message>) sessionMessageMap.computeIfAbsent(sessionId, k -> new LinkedList<>());
-        messages.addLast(Message.user(question));
+    public String question(LinkedList<Message> messages) {
+        LOGGER.info("User: {}", messages.getLast().content());
         var answer = request(messages);
         while (true) {
             LOGGER.info("AI: {}", answer);

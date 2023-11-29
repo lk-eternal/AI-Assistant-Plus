@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -29,16 +30,17 @@ public class CmdModel extends PluginModel {
                 系统将外部服务的响应或结果作为系统身份发送给AI。
             AI获取外部响应：
                 AI作为接收方接收到系统发送的外部响应。
-                AI根据需要从外部响应中提取所需的信息，并在回复用户时使用这些信息。
-                获取外部响应后可以根据需要重复这个“调用外部工具/获取外部响应”的过程，或者给出最终结果。
-                如果外部响应提示错误信息，请立即调用外部工具[工具名]参数[工具名]或者回复用户。
+                AI根据需要从外部响应中提取所需的信息，获取外部响应后可以根据需要重复这个“调用外部工具/获取外部响应”的过程，或者给出最终结果。
+                如果外部响应提示错误信息，请思考后立即调用外部工具[工具名]参数[工具名]或者回复用户。
             AI回复用户：
                 AI根据处理结果和外部响应，生成最终答案的回复消息。
                 AI将回复消息发送给用户，提供所需的信息或完成用户的需求。
                         
             下面是一个对话示例:
             User: 今天xxx天气怎么样?
-            Assistant: [web]http://www.weather.com.cn/weather/101270101.shtml[web]
+            Assistant: [web](天气网址)[web]
+            System: 301
+            Assistant: [web](另一个天气网址)[web]
             System: (网页内容)
             Assistant: 今天xxx天气是xx.
             """;
@@ -53,10 +55,8 @@ public class CmdModel extends PluginModel {
     }
 
     @Override
-    public String question(String sessionId, String question) {
-        LOGGER.info("User: {}", question);
-        final var messages = (LinkedList<Message>) sessionMessageMap.computeIfAbsent(sessionId, k -> new LinkedList<>());
-        messages.addLast(Message.user(question));
+    public String question(LinkedList<Message> messages) {
+        LOGGER.info("User: {}", messages.getLast().content());
         var answer = request(messages);
         while (true) {
             LOGGER.info("AI: {}", answer);

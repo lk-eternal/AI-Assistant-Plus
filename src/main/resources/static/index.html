@@ -2,8 +2,8 @@
 <html lang="zh-cn">
 
 <head>
-
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <title>Chat Interface</title>
     <style>
         body {
@@ -11,13 +11,15 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 90vh;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
             font-family: 'Roboto', sans-serif;
             background-color: grey;
         }
 
         .title{
-            font-size: 48px;
+            font-size: 3em;
             line-height: 1.5;
             color: white;
         }
@@ -40,16 +42,14 @@
             display: flex;
             flex-direction: column;
             width: 100%;
-            height: 80%;
+            height: 100%;
 			border: none;
             background-color: white;
-            padding: 10px;
             overflow-y: auto;
         }
 
-        #chatBox p {
-            font-size: 14px;
-            line-height: 1.5;
+        #chatBox > p {
+            font-size: 1em;
             padding: 5px;
             margin: 5px 0;
             width: fit-content;
@@ -57,13 +57,13 @@
             border-radius: 8px;
         }
 
-        #chatBox p:nth-child(odd) {
+        #chatBox > p:nth-child(odd) {
             background-color: #f1f0f0;
             color: #333;
             align-self: flex-start
         }
 
-        #chatBox p:nth-child(even) {
+        #chatBox > p:nth-child(even) {
             background-color: #009688;
             color: white;
             align-self: flex-end
@@ -77,8 +77,8 @@
 		}
 
 		.toolBox button{
-			width: 30px;
-			height: 30px;
+			width: 2.5em;
+			height: 2.5em;
 			border: 1px solid #ccc;
             border-radius: 5px;
 		}
@@ -86,7 +86,7 @@
         .inputBox {
             display: flex;
             flex-direction: row;
-			height: 60px;
+			height: 5em;
             width: 100%;
             margin: 5px;
 			border: 1px solid #ccc;
@@ -103,7 +103,7 @@
 			border: none;
             background-color: white;
             overflow-y: auto;
-            font-size: 14px;
+            font-size: 1em;
             font-family: 'Roboto', sans-serif;
             resize: none;
             outline: none;
@@ -116,7 +116,7 @@
             padding: 10px 20px;
             margin: 10px 0;
             color: white;
-            font-size: 16px;
+            font-size: 1em;
             box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
             border-radius: 5px;
             cursor: pointer;
@@ -127,6 +127,29 @@
             box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.4);
             transform: scale(1.05);
             transition: all 0.2s;
+        }
+
+        @media (max-width: 1080px) {
+            .content {
+                width: 80%;
+                height: 80%;
+            }
+            #chatBox > p {
+                font-size: 2em;
+            }
+            .toolBox button{
+                width: 6em;
+                height: 6em;
+            }
+            .inputBox {
+			    height: 8em;
+            }
+            .inputBox textarea{
+                font-size: 2em;
+            }
+            .inputBox button {
+                font-size: 2em;
+            }
         }
 
 
@@ -158,26 +181,39 @@
 		var chatBox = document.getElementById('chatBox');
 		var sendBtn = document.getElementById('sendBtn');
 
-
-		function clearMessages() {
-			chatBox.innerHTML = '';
-		}
-
 		inputTextArea.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 sendMessage();
             }
         });
 
+        window.addEventListener("beforeunload", function (event) {
+            clearMessages();
+        });
+
+		async function clearMessages() {
+			var response = await fetch('/api', {
+                method: 'DELETE'
+            });
+
+            chatBox.innerHTML = '<p>有何贵干?</p>';
+			document.cookie = "cookieName=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+			inputTextArea.disabled = false;
+			sendBtn.disabled = false;
+		}
+
         async function sendMessage() {
             var message = inputTextArea.value;
             if(message == undefined || message == ''){
                 return;
             }
-            chatBox.innerHTML += '<p>' + message + '</p>';
             inputTextArea.value = '';
 
-			isWaitingForResponse = true;
+            var pElement = document.createElement('p');
+            pElement.innerHTML = message;
+            chatBox.appendChild(pElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
 			inputTextArea.disabled = true;
 			sendBtn.disabled = true;
 
@@ -191,12 +227,14 @@
 
             if (response.ok) {
                 var data = await response.text();
-                chatBox.innerHTML += '<p>' + data + '</p>';
+                var pElement = document.createElement('p');
+                pElement.innerHTML = marked.parse(data);
+                chatBox.appendChild(pElement);
             } else {
                 console.error('Error:', response.status, response.statusText);
                 chatBox.innerHTML += '<p>' + response.status + ':' + response.statusText + '</p>';
             }
-
+            chatBox.scrollTop = chatBox.scrollHeight;
 			inputTextArea.disabled = false;
 			sendBtn.disabled = false;
         }

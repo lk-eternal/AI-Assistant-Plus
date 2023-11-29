@@ -4,10 +4,10 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.model.CmdModel;
 import lk.eternal.ai.model.Model;
 import lk.eternal.ai.plugin.CalcPlugin;
-import lk.eternal.ai.plugin.HttpPlugin;
 import lk.eternal.ai.plugin.DbPlugin;
 import lk.eternal.ai.service.ChatGPT3_5Service;
 import org.slf4j.Logger;
@@ -21,10 +21,7 @@ import java.net.HttpCookie;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.file.Files;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Executors;
 
 public class Application {
@@ -36,7 +33,7 @@ public class Application {
         Model model = new CmdModel(new ChatGPT3_5Service(System.getProperty("openai.key")));
         model.addPlugin(new CalcPlugin());
         model.addPlugin(new DbPlugin());
-        model.addPlugin(new HttpPlugin());
+//        model.addPlugin(new HttpPlugin());
 
         HttpServer server = HttpServer.create(new InetSocketAddress(80), 0);
         server.createContext("/api", new ApiHandler(model));
@@ -76,6 +73,8 @@ public class Application {
 
     static class ApiHandler implements HttpHandler {
 
+
+        private final Map<String, List<Message>> sessionMessageMap = new HashMap<>();
         private final Model model;
 
         public ApiHandler(Model model) {
@@ -88,15 +87,32 @@ public class Application {
             t.getResponseHeaders().add("Access-Control-Allow-Headers", "*");
             t.getResponseHeaders().add("Access-Control-Allow-Methods", "*");
 
+            var sessionId = this.getSessionIdFromCookie(t.getRequestHeaders());
+            final var hasSessionId = sessionId != null;
+
             if (t.getRequestMethod().equalsIgnoreCase("post")) {
-                final var sessionId = this.getSessionIdFromCookie(t.getRequestHeaders());
-                final var body = new String(t.getRequestBody().readAllBytes());
-                final var answer = this.model.question(sessionId, body);
-                this.setSessionIdInCookie(t.getResponseHeaders(), sessionId);
+                final var question = new String(t.getRequestBody().readAllBytes());
+
+                if (!hasSessionId) {
+                    sessionId = UUID.randomUUID().toString();
+                    this.setSessionIdInCookie(t.getResponseHeaders(), sessionId);
+                }
+                final var messages = (LinkedList<Message>) this.sessionMessageMap.computeIfAbsent(sessionId, k -> new LinkedList<>());
+                messages.addLast(Message.user(question));
+                final var answer = this.model.question(messages);
+
                 t.sendResponseHeaders(200, answer.getBytes().length);
                 OutputStream os = t.getResponseBody();
                 os.write(answer.getBytes());
                 os.flush();
+                os.close();
+            }
+            if (t.getRequestMethod().equalsIgnoreCase("delete")) {
+                if (hasSessionId) {
+                    this.sessionMessageMap.remove(sessionId);
+                }
+                t.sendResponseHeaders(200, 0);
+                OutputStream os = t.getResponseBody();
                 os.close();
             } else {
                 t.sendResponseHeaders(200, 0);
@@ -112,7 +128,7 @@ public class Application {
                     .filter(cookie -> cookie.getName().equals("sessionId"))
                     .map(HttpCookie::getValue)
                     .findFirst()
-                    .orElseGet(() -> UUID.randomUUID().toString());
+                    .orElse(null);
         }
 
         private void setSessionIdInCookie(Headers responseHeaders, String sessionId) {
@@ -143,17 +159,19 @@ public class Application {
                     .map(File::new)
                     .orElse(null);
 
-            try (final var outputStream = exchange.getResponseBody()) {
-                if (file != null && file.exists() && file.isFile()) {
-                    byte[] fileContent = Files.readAllBytes(file.toPath());
-                    exchange.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
-                    exchange.sendResponseHeaders(200, fileContent.length);
-                    outputStream.write(fileContent);
-                } else {
-                    String response = "File not found";
-                    exchange.sendResponseHeaders(404, response.length());
-                    outputStream.write(response.getBytes());
-                }
+            if (file != null && file.exists() && file.isFile()) {
+                byte[] fileContent = Files.readAllBytes(file.toPath());
+                exchange.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
+                exchange.sendResponseHeaders(200, fileContent.length);
+                final var outputStream = exchange.getResponseBody();
+                outputStream.write(fileContent);
+                outputStream.close();
+            } else {
+                String response = "File not found";
+                exchange.sendResponseHeaders(404, response.length());
+                final var outputStream = exchange.getResponseBody();
+                outputStream.write(response.getBytes());
+                outputStream.close();
             }
         }
     }

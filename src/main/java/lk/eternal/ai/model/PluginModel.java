@@ -26,7 +26,6 @@ public abstract class PluginModel implements Model{
 
     protected final GPTService gptService;
     protected Message promptMessage;
-    protected final Map<String, List<Message>> sessionMessageMap = new HashMap<>();
 
     private final Map<String, Plugin> pluginMap;
 
@@ -38,7 +37,7 @@ public abstract class PluginModel implements Model{
     @Override
     public void addPlugin(Plugin plugin) {
         pluginMap.put(plugin.name(), plugin);
-        promptMessage = Message.system(PROMPT.replace("${plugins}" + getPrompt(), getPluginDescriptions()), false);
+        promptMessage = Message.system(PROMPT.replace("${plugins}", getPluginDescriptions()) + getPrompt(), false);
     }
 
     abstract protected String getPrompt();
