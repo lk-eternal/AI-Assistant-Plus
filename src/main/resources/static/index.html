@@ -129,6 +129,12 @@
             transition: all 0.2s;
         }
 
+        p pre {
+            line-height: 1.25rem;
+            color: #483d8b;
+            border: 3px double grey;
+        }
+
         @media (max-width: 1080px) {
             .content {
                 width: 80%;
@@ -176,6 +182,11 @@
 
     </div>
     <script>
+        var renderer = new marked.Renderer();
+
+        renderer.paragraph = function(text) {
+          return text;
+        };
 
 		var inputTextArea = document.getElementById('inputTextArea');
 		var chatBox = document.getElementById('chatBox');
@@ -228,7 +239,7 @@
             if (response.ok) {
                 var data = await response.text();
                 var pElement = document.createElement('p');
-                pElement.innerHTML = marked.parse(data);
+                pElement.innerHTML = marked.parse(data, { renderer: renderer });
                 chatBox.appendChild(pElement);
             } else {
                 console.error('Error:', response.status, response.statusText);
