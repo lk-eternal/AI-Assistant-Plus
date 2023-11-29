@@ -1,11 +1,11 @@
 package lk.eternal.ai.model;
 
 
-import lk.eternal.ai.service.Service;
+import lk.eternal.ai.plugin.Plugin;
 
 public interface Model {
 
     String question(String sessionId, String question);
 
-    void addService(Service service);
+    void addPlugin(Plugin plugin);
 }

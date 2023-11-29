@@ -1,7 +1,7 @@
-package lk.eternal.ai.service;
+package lk.eternal.ai.plugin;
 
 
-public interface Service {
+public interface Plugin {
 
     String name();
 

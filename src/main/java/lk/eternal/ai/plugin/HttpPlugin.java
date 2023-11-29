@@ -1,4 +1,4 @@
-package lk.eternal.ai.service;
+package lk.eternal.ai.plugin;
 
 
 import java.io.IOException;
@@ -9,7 +9,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.regex.Pattern;
 
-public class HttpService implements Service {
+public class HttpPlugin implements Plugin {
 
     private final static HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
@@ -23,7 +23,7 @@ public class HttpService implements Service {
 
     @Override
     public String description() {
-        return "查询网络信息的工具,输入是网址,如果不知道网址可以利用搜索引擎.请求成功会返回整个网页文本内容,请求失败会返回错误码,从中提取需要的信息.";
+        return "查询网络信息的工具,参数是网址,如果不知道网址可以利用搜索引擎(使用).请求成功会返回整个网页文本内容,请求失败会返回错误码,从中提取需要的信息.";
     }
 
     public String execute(String url) {

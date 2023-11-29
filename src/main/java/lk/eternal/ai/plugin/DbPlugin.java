@@ -1,16 +1,16 @@
-package lk.eternal.ai.service;
+package lk.eternal.ai.plugin;
 
 
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 
-public class SqlService implements Service {
+public class DbPlugin implements Plugin {
     private final String dbUrl;
     private final String dbUser;
     private final String dbPassword;
 
-    public SqlService() throws ClassNotFoundException {
+    public DbPlugin() throws ClassNotFoundException {
         Class.forName("org.postgresql.Driver");
         dbUrl = System.getProperty("db.url");
         dbUser = System.getProperty("db.username");
@@ -19,12 +19,12 @@ public class SqlService implements Service {
 
     @Override
     public String name() {
-        return "sql";
+        return "db";
     }
 
     @Override
     public String description() {
-        return "执行sql的工具,输入是需要执行的sql语句,数据库是Postgresql";
+        return "执行数据库的工具(默认已经连接上数据库),参数是需要执行的sql语句,数据库类型是Postgresql";
     }
 
     public String execute(String sql) {
