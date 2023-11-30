@@ -4,8 +4,20 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <title>Chat Interface</title>
+    <title>AI Assistant Plus</title>
+    <link rel="icon" href="lk_ico.png" type="image/png">
     <style>
+
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
         body {
             display: flex;
             flex-direction: column;
@@ -30,7 +42,8 @@
             justify-content: center;
             align-items: center;
             width: 50%;
-            height: 60%;
+            min-height: 50%;
+            max-height: 80%;
 			border: 1px solid #ccc;
             background-color: white;
             padding: 10px;
@@ -43,30 +56,68 @@
             flex-direction: column;
             width: 100%;
             height: 100%;
-			border: none;
+            border: none;
             background-color: white;
             overflow-y: auto;
+            padding: 0px 10px 10px 10px;
         }
 
         #chatBox > p {
             font-size: 1em;
-            padding: 5px;
+            padding: 10px;
             margin: 5px 0;
-            width: fit-content;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+            min-width: fit-content;
+            max-width: 90%;
+            border-radius: 10px;
+            box-shadow: 2px 2px 5px #888888;
         }
 
         #chatBox > p:nth-child(odd) {
-            background-color: #f1f0f0;
-            color: #333;
-            align-self: flex-start
+            background-color: #483D8B;
+            color: #f8f8ff;
+            align-self: flex-start;
         }
 
         #chatBox > p:nth-child(even) {
-            background-color: #009688;
+            background-color: #20B2AA;
+            color: #f8f8ff;
+            align-self: flex-end;
+        }
+
+        p pre{
+            position: relative;
+            line-height: 1.25rem;
+            color: #f8f8ff;
+            background-color: #2b2b2b;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 2px 2px 5px black;
+            max-height: 300px;
+            overflow: auto;
+        }
+
+        p pre .copy-button {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            padding: 5px 10px;
+            background-color: #20B2AA;
             color: white;
-            align-self: flex-end
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        p > code{
+            line-height: 1.25rem;
+            color: #f8f8ff;
+            background-color: #2b2b2b;
+            border-radius: 3px;
+            box-shadow: 2px 2px 5px black;
+            max-height: 300px;
+            overflow: auto;
+            margin: 5px;
+            font-size: 14px;
         }
 
         .toolBox {
@@ -74,6 +125,7 @@
             flex-direction: row;
 			justify-content: space-between;
 			width: 100%;
+			padding: 5px 0px 0px 0px;
 		}
 
 		.toolBox button{
@@ -111,28 +163,25 @@
 		}
 
 		.inputBox button {
+			width: 2.5em;
+			height: 2.5em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background-color: #009688;
             border: none;
-            padding: 10px 20px;
-            margin: 10px 0;
             color: white;
             font-size: 1em;
             box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
             border-radius: 5px;
             cursor: pointer;
-            border: none;
+            margin-top: auto;
         }
 
         button:hover {
             box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.4);
             transform: scale(1.05);
             transition: all 0.2s;
-        }
-
-        p pre {
-            line-height: 1.25rem;
-            color: #483d8b;
-            border: 3px double grey;
         }
 
         @media (max-width: 1080px) {
@@ -177,7 +226,11 @@
         </div>
         <div class="inputBox">
             <textarea id="inputTextArea" placeholder="今天天气怎么样?"></textarea>
-            <button id="sendBtn" onclick="sendMessage()">Send</button>
+            <button id="sendBtn" onclick="sendMessage()" title="Send">
+                <svg viewBox="0 0 24 24" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5.69362 11.9997L2.29933 3.2715C2.0631 2.66403 2.65544 2.08309 3.2414 2.28959L3.33375 2.32885L21.3337 11.3288C21.852 11.588 21.8844 12.2975 21.4309 12.6129L21.3337 12.6705L3.33375 21.6705C2.75077 21.962 2.11746 21.426 2.2688 20.8234L2.29933 20.7278L5.69362 11.9997L2.29933 3.2715L5.69362 11.9997ZM4.4021 4.54007L7.01109 11.2491L13.6387 11.2497C14.0184 11.2497 14.3322 11.5318 14.3818 11.8979L14.3887 11.9997C14.3887 12.3794 14.1065 12.6932 13.7404 12.7428L13.6387 12.7497L7.01109 12.7491L4.4021 19.4593L19.3213 11.9997L4.4021 4.54007Z"></path>
+                </svg>
+            </button>
         </div>
 
     </div>
@@ -221,7 +274,7 @@
             inputTextArea.value = '';
 
             var pElement = document.createElement('p');
-            pElement.innerHTML = message;
+            pElement.textContent = message;
             chatBox.appendChild(pElement);
             chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -240,6 +293,53 @@
                 var data = await response.text();
                 var pElement = document.createElement('p');
                 pElement.innerHTML = marked.parse(data, { renderer: renderer });
+
+                // 获取 p 元素中的所有 pre 元素
+                var preElements = pElement.getElementsByTagName('pre');
+
+                // 为每个 pre 元素添加点击事件
+                for (var i = 0; i < preElements.length; i++) {
+                    var copyButton = document.createElement('button');
+                    copyButton.textContent = '复制';
+                    copyButton.className = 'copy-button';
+                    preElements[i].appendChild(copyButton);
+
+                    copyButton.addEventListener('click', function(event) {
+                        // 创建一个 textarea 元素，用于复制文本
+                        var textarea = document.createElement('textarea');
+                        // 将 pre 元素中的文本设置为 textarea 的值
+                        textarea.value = event.target.parentNode.textContent.replace('复制', '');
+                        // 将 textarea 添加到文档中
+                        document.body.appendChild(textarea);
+                        // 选中 textarea 中的文本
+                        textarea.select();
+                        // 执行复制命令
+                        document.execCommand('copy');
+                        // 从文档中移除 textarea
+                        document.body.removeChild(textarea);
+
+                        // 创建一个提示元素
+                        var alert = document.createElement('div');
+                        alert.textContent = '复制成功！';
+                        alert.style.position = 'fixed';
+                        alert.style.bottom = '50%';
+                        alert.style.left = '50%';
+                        alert.style.transform = 'translate(-50%, 50%)';
+                        alert.style.backgroundColor = '#20B2AA';
+                        alert.style.color = 'white';
+                        alert.style.padding = '10px';
+                        alert.style.borderRadius = '5px';
+
+                        // 将提示元素添加到文档中
+                        document.body.appendChild(alert);
+
+                        // 设置一个定时器，在 2 秒后移除提示元素
+                        setTimeout(function() {
+                            document.body.removeChild(alert);
+                        }, 2000);
+                    });
+                }
+
                 chatBox.appendChild(pElement);
             } else {
                 console.error('Error:', response.status, response.statusText);

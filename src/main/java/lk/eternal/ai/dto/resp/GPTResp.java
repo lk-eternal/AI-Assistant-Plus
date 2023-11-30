@@ -2,7 +2,7 @@ package lk.eternal.ai.dto.resp;
 
 import java.util.List;
 
-public class ChatCompletion {
+public class GPTResp {
     private String id;
     private String object;
     private long created;
@@ -10,6 +10,7 @@ public class ChatCompletion {
     private List<Choice> choices;
     private Usage usage;
     private String system_fingerprint;
+    private Error error;
 
     public String getId() {
         return id;
@@ -65,6 +66,14 @@ public class ChatCompletion {
 
     public void setSystem_fingerprint(String system_fingerprint) {
         this.system_fingerprint = system_fingerprint;
+    }
+
+    public Error getError() {
+        return error;
+    }
+
+    public void setError(Error error) {
+        this.error = error;
     }
 
     public static class Choice {
@@ -145,6 +154,45 @@ public class ChatCompletion {
 
         public void setTotal_tokens(int total_tokens) {
             this.total_tokens = total_tokens;
+        }
+    }
+
+    public static class Error {
+        private String message;
+        private String type;
+        private String param;
+        private String code;
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getParam() {
+            return param;
+        }
+
+        public void setParam(String param) {
+            this.param = param;
+        }
+
+        public String getCode() {
+            return code;
+        }
+
+        public void setCode(String code) {
+            this.code = code;
         }
     }
 }

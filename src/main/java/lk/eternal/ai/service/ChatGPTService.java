@@ -2,7 +2,7 @@ package lk.eternal.ai.service;
 
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.dto.req.Req;
-import lk.eternal.ai.dto.resp.ChatCompletion;
+import lk.eternal.ai.dto.resp.GPTResp;
 import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,13 +56,22 @@ public class ChatGPTService implements GPTService {
             LOGGER.error("请求OpenAI失败: {}", e.getMessage(), e);
             return e.getMessage();
         }
-        final var chatCompletion = Mapper.readValueNotError(response.body(), ChatCompletion.class);
-        return Optional.ofNullable(chatCompletion)
-                .map(ChatCompletion::getChoices)
+        final var gptResp = Mapper.readValueNotError(response.body(), GPTResp.class);
+
+        final var error = Optional.ofNullable(gptResp).map(GPTResp::getError).orElse(null);
+        if(error != null){
+            if("rate_limit_exceeded".equals(error.getCode())){
+                return response.statusCode() + ":请求过于频繁,请稍后再试!";
+            }
+            return Optional.ofNullable(error.getMessage()).orElseGet(() -> response.statusCode() + ":发生未知错误,请稍后再试!");
+        }
+
+        return Optional.ofNullable(gptResp)
+                .map(GPTResp::getChoices)
                 .filter(Predicate.not(List::isEmpty))
                 .map(cs -> cs.get(0))
-                .map(ChatCompletion.Choice::getMessage)
-                .map(ChatCompletion.Message::getContent)
+                .map(GPTResp.Choice::getMessage)
+                .map(GPTResp.Message::getContent)
                 .orElse(response.body());
     }
 }
