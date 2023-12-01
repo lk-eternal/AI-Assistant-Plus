@@ -10,17 +10,14 @@ import lk.eternal.ai.model.Model;
 import lk.eternal.ai.plugin.CalcPlugin;
 import lk.eternal.ai.plugin.DbPlugin;
 import lk.eternal.ai.service.ChatGPT3_5Service;
+import lk.eternal.ai.util.ContentTypeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.HttpCookie;
 import java.net.InetSocketAddress;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.Executors;
 
@@ -159,12 +156,13 @@ public class Application {
                     .map(File::new)
                     .orElse(null);
 
+            exchange.getResponseHeaders().set("Content-Type", ContentTypeUtil.type(requestPath));
+
             if (file != null && file.exists() && file.isFile()) {
-                byte[] fileContent = Files.readAllBytes(file.toPath());
-                exchange.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
-                exchange.sendResponseHeaders(200, fileContent.length);
-                final var outputStream = exchange.getResponseBody();
-                outputStream.write(fileContent);
+                byte[] fileBytes = readFileBytes(file);
+                exchange.sendResponseHeaders(200, fileBytes.length);
+                OutputStream outputStream = exchange.getResponseBody();
+                outputStream.write(fileBytes);
                 outputStream.close();
             } else {
                 String response = "File not found";
@@ -174,5 +172,18 @@ public class Application {
                 outputStream.close();
             }
         }
+
+        private byte[] readFileBytes(File file) throws IOException {
+            try (InputStream inputStream = new FileInputStream(file)) {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                byte[] buffer = new byte[4096];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+                return outputStream.toByteArray();
+            }
+        }
+
     }
 }

@@ -1,0 +1,249 @@
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Roboto', sans-serif;
+    background-color: grey;
+}
+
+button:hover {
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.4);
+    transform: scale(1.05);
+    transition: all 0.2s;
+}
+
+.title{
+    font-size: 3em;
+    line-height: 1.5;
+    color: white;
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    .title{
+        display: none;
+    }
+}
+
+.content{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 50%;
+    min-height: 50%;
+    max-height: 80%;
+    border: 1px solid #ccc;
+    background-color: white;
+    padding: 10px;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    .content {
+        position: fixed;
+        padding: 0px;
+        top: 0;
+        left: 0;
+        width: 98%;
+        height: 98%;
+        max-height: 100%;
+        font-size: 1.25em;
+        padding: 1%;
+    }
+}
+
+#chatBox {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    border: none;
+    background-color: white;
+    overflow-y: auto;
+    padding: 0px 10px 10px 10px;
+}
+
+#chatBox > div {
+    display: inline-block;
+    font-size: 1em;
+    padding: 10px;
+    margin: 0.5em 0em 0.5em 0em;
+    border-radius: 10px;
+    box-shadow: 2px 2px 5px #888888;
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    #chatBox > div {
+        font-size: 2em;
+    }
+}
+
+#chatBox > div:nth-child(odd) {
+    background-color: #483D8B;
+    color: #f8f8ff;
+    align-self: flex-start;
+}
+
+#chatBox > div:nth-child(even) {
+    background-color: #20B2AA;
+    color: #f8f8ff;
+    align-self: flex-end;
+}
+
+#chatBox > div p{
+    margin: 0px;
+}
+
+#chatBox > div pre {
+    position: relative;
+    line-height: 1.25rem;
+    color: #f8f8ff;
+    background-color: #2b2b2b;
+    border-radius: 5px;
+    padding: 10px;
+    box-shadow: 2px 2px 5px black;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    #chatBox > div pre{
+        line-height: 2rem;
+    }
+}
+
+div .copy-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    background-color: #20B2AA;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    div .copy-button {
+        width: 6em;
+        height: 3em;
+        font-size: 0.5em;
+    }
+}
+
+p > code{
+    color: #f8f8ff;
+    background-color: #2b2b2b;
+    border-radius: 3px;
+    box-shadow: 2px 2px 5px black;
+    max-height: 300px;
+    overflow: auto;
+    margin: 5px;
+    font-size: 1.25em;
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    p > code{
+        font-size: 1em;
+    }
+}
+
+.toolBox {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    padding: 5px 0px 0px 0px;
+}
+
+.toolBox button{
+    width: 2.5em;
+    height: 2.5em;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    .toolBox button{
+        width: 6em;
+        height: 6em;
+    }
+}
+
+.inputBox {
+    display: flex;
+    flex-direction: row;
+    height: 5em;
+    width: 100%;
+    margin: 5px;
+    border: 1px solid #ccc;
+    border-width: 1px 0 0 0;
+    background-color: white;
+    padding: 10px;
+    resize: none;
+    outline: none;
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    .inputBox {
+        height: 8em;
+    }
+}
+
+.inputBox textarea{
+    height: 100%;
+    width: 100%;
+    border: none;
+    background-color: white;
+    overflow-y: auto;
+    font-size: 1em;
+    font-family: 'Roboto', sans-serif;
+    resize: none;
+    outline: none;
+    border: none;
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    .inputBox textarea{
+        font-size: 2em;
+    }
+}
+
+.inputBox button {
+    width: 2.5em;
+    height: 2.5em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #009688;
+    border: none;
+    color: white;
+    font-size: 1em;
+    box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: auto;
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    .inputBox button {
+        font-size: 2em;
+    }
+}

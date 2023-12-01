@@ -37,12 +37,10 @@ public class CmdModel extends PluginModel {
                 AI将回复消息发送给用户，提供所需的信息或完成用户的需求。
                         
             下面是一个对话示例:
-            User: 今天xxx天气怎么样?
-            Assistant: [web](天气网址)[web]
-            System: 301
-            Assistant: [web](另一个天气网址)[web]
-            System: (网页内容)
-            Assistant: 今天xxx天气是xx.
+            User: 1 + 1 = ?
+            Assistant: [calc]1+1[calc]
+            System: 2
+            Assistant: 1 + 1 = 2
             """;
 
 
