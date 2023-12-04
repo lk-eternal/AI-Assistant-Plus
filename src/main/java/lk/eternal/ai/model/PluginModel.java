@@ -18,7 +18,7 @@ public abstract class PluginModel implements Model {
 
 
     private static final String PROMPT = """
-            你现在是一个具有执行工具能力的高级AI助手,你需要尽可能的去回答问题
+            你现在是LK公司的一个具有执行工具能力的高级AI助手,你需要尽可能的去回答问题
             你可以使用以下的工具:[(工具名和描述}]
             ${plugins}
                         

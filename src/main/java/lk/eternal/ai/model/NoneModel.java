@@ -24,6 +24,7 @@ public class NoneModel implements Model {
     public String question(LinkedList<Message> messages) {
         LOGGER.info("User: {}", messages.getLast().content());
         var answer = request(messages);
+        LOGGER.info("AI: {}", answer);
         messages.addLast(Message.assistant(answer, false));
         return answer;
     }

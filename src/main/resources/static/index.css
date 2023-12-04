@@ -18,6 +18,8 @@ body {
     overflow: hidden;
     font-family: 'Roboto', sans-serif;
     background-color: grey;
+    margin: 0;
+    padding: 0;
 }
 
 button:hover {
@@ -42,7 +44,6 @@ button:hover {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
     width: 50%;
     min-height: 50%;
     max-height: 80%;
@@ -55,30 +56,34 @@ button:hover {
 
 @media (max-width: 1000px) and (min-height: 800px) {
     .content {
-        position: fixed;
-        padding: 0px;
-        top: 0;
-        left: 0;
-        width: 98%;
-        height: 98%;
-        max-height: 100%;
+        height: -webkit-fill-available;
+        width: -webkit-fill-available;
+        max-height: none;
+        border: none;
+        padding: 20px;
+        box-shadow: none;
+        border-radius: 0;
         font-size: 1.25em;
-        padding: 1%;
     }
 }
 
 #chatBox {
     display: flex;
     flex-direction: column;
-    width: 100%;
     height: 100%;
     border: none;
-    background-color: white;
     overflow-y: auto;
     padding: 0px 10px 10px 10px;
 }
 
+@media (max-width: 1000px) and (min-height: 800px) {
+    #chatBox {
+        height: inherit;
+    }
+}
+
 #chatBox > div {
+    width: fit-content;
     display: inline-block;
     font-size: 1em;
     padding: 10px;
@@ -184,9 +189,8 @@ p > code{
 .toolBox {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
     width: 100%;
-    padding: 5px 0px 0px 0px;
+    padding: 5px 0px 5px 0px;
 }
 
 .toolBox button{
@@ -207,8 +211,7 @@ p > code{
     display: flex;
     flex-direction: row;
     height: 5em;
-    width: 100%;
-    margin: 5px;
+    width: -webkit-fill-available;
     border: 1px solid #ccc;
     border-width: 1px 0 0 0;
     background-color: white;
@@ -224,8 +227,7 @@ p > code{
 }
 
 .inputBox textarea{
-    height: 100%;
-    width: 100%;
+    width: inherit;
     border: none;
     background-color: white;
     overflow-y: auto;
