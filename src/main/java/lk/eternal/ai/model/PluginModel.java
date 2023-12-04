@@ -7,10 +7,12 @@ import lk.eternal.ai.service.GPTService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-public abstract class PluginModel implements Model{
+public abstract class PluginModel implements Model {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PluginModel.class);
 
@@ -19,7 +21,7 @@ public abstract class PluginModel implements Model{
             你现在是一个具有执行工具能力的高级AI助手,你需要尽可能的去回答问题
             你可以使用以下的工具:[(工具名和描述}]
             ${plugins}
-            
+                        
             """;
 
     private static final int MAX_HISTORY = 10;
@@ -34,7 +36,6 @@ public abstract class PluginModel implements Model{
         this.gptService = gptService;
     }
 
-    @Override
     public void addPlugin(Plugin plugin) {
         pluginMap.put(plugin.name(), plugin);
         promptMessage = Message.system(PROMPT.replace("${plugins}", getPluginDescriptions()) + getPrompt(), false);
@@ -42,7 +43,7 @@ public abstract class PluginModel implements Model{
 
     abstract protected String getPrompt();
 
-    private String getPluginDescriptions(){
+    private String getPluginDescriptions() {
         return pluginMap.entrySet().stream().map(e -> e.getKey() + ":" + e.getValue().description())
                 .collect(Collectors.joining("\n"));
     }
