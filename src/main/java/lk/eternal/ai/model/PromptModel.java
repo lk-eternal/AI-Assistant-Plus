@@ -27,15 +27,15 @@ public class PromptModel extends PluginModel {
             (然后等待系统给出工具的响应结果)
             (系统响应后可以重复这个“思考/动作/输入/等待响应结果”的过程,或者给出最终结果)
                         
-            最终结果:针对于原始问题,输出最终结果,如果有引用来源需要加上引用地址
+            最终结果:针对于原始问题,输出最终结果,如果有引用来源需要加上引用地址,地址前后加上空格
                         
             示例:
             用户:今天成都天气怎么样?
             助手:思考: 查看成都的天气需要使用web工具查询网页内容.
-            动作: web
+            动作: http
             输入: http://www.weather.com.cn/weather/101270101.shtml
             系统:28日（今天） 多云 19/8℃
-            助手:最终结果:今天成都多云,气温是8到19摄氏度.
+            助手:最终结果:今天成都多云,气温是8到19摄氏度. http://www.weather.com.cn/weather/101270101.shtml\s
             """;
 
     public PromptModel(GPTService gptService) {

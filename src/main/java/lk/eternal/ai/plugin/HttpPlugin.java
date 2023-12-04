@@ -18,12 +18,12 @@ public class HttpPlugin implements Plugin {
 
     @Override
     public String name() {
-        return "web";
+        return "http";
     }
 
     @Override
     public String description() {
-        return "查询网络信息的工具,参数是网址,如果不知道网址可以利用搜索引擎(使用).请求成功会返回整个网页文本内容,请求失败会返回错误码,从中提取需要的信息.";
+        return "访问对应网址的工具,参数是网址.请求成功会返回整个网页文本内容,请求失败会返回错误码,从中提取需要的信息.因此你获得了获取实时网页信息的能力,当用户需要查询实时信息时建议使用本工具.";
     }
 
     public String execute(String url) {

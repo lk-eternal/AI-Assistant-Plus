@@ -7,8 +7,11 @@ import com.sun.net.httpserver.HttpServer;
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.model.CmdModel;
 import lk.eternal.ai.model.Model;
+import lk.eternal.ai.model.PromptModel;
 import lk.eternal.ai.plugin.CalcPlugin;
 import lk.eternal.ai.plugin.DbPlugin;
+import lk.eternal.ai.plugin.GoogleSearchPlugin;
+import lk.eternal.ai.plugin.HttpPlugin;
 import lk.eternal.ai.service.ChatGPT3_5Service;
 import lk.eternal.ai.util.ContentTypeUtil;
 import org.slf4j.Logger;
@@ -27,10 +30,12 @@ public class Application {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         initProperties();
 
-        Model model = new CmdModel(new ChatGPT3_5Service(System.getProperty("openai.key")));
+        Model model = new PromptModel(new ChatGPT3_5Service(System.getProperty("openai.key")));
         model.addPlugin(new CalcPlugin());
         model.addPlugin(new DbPlugin());
-//        model.addPlugin(new HttpPlugin());
+        model.addPlugin(new GoogleSearchPlugin(System.getProperty("google.key"), System.getProperty("google.search.cx")));
+        model.addPlugin(new HttpPlugin());
+
 
         HttpServer server = HttpServer.create(new InetSocketAddress(80), 0);
         server.createContext("/api", new ApiHandler(model));
