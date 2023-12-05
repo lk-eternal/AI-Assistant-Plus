@@ -5,17 +5,23 @@ document.addEventListener('DOMContentLoaded', function() {
     var clearBtn = document.getElementById('clearBtn');
     var modelDropdown = document.getElementById('modelDropdown');
 
-
-
     window.addEventListener("beforeunload", clearMessages);
     clearBtn.addEventListener('click', clearMessages);
     sendBtn.addEventListener('click', sendMessage);
 
     document.getElementById('modelSelectBtn').addEventListener('click', function() {
-        document.getElementById('modelDropdown').style.display = 'block';
+        modelDropdown.style.display = 'block';
     });
+
+//    var options = modelDropdown.getElementsByTagName('option');
+//    for (var i = 0; i < options.length; i++) {
+//        options[i].addEventListener('keyDown', function() {
+//          modelDropdown.style.display = 'none';
+//      });
+//    }
+
     modelDropdown.addEventListener('change', function() {
-        document.getElementById('modelDropdown').style.display = 'none';
+        modelDropdown.style.display = 'none';
         clearMessages();
     });
 
