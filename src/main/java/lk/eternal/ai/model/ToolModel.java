@@ -39,6 +39,11 @@ public class ToolModel implements Model {
     }
 
     @Override
+    public String getName() {
+        return "tool";
+    }
+
+    @Override
     public String question(LinkedList<Message> messages) {
         LOGGER.info("User: {}", messages.getLast().content());
         String resp;

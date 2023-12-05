@@ -4,17 +4,21 @@ import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import lk.eternal.ai.dto.req.AppReq;
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.model.*;
 import lk.eternal.ai.plugin.*;
 import lk.eternal.ai.service.ChatGPT3_5Service;
+import lk.eternal.ai.service.ChatGPT4Service;
 import lk.eternal.ai.util.ContentTypeUtil;
+import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.HttpCookie;
 import java.net.InetSocketAddress;
+import java.net.ProxySelector;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -24,21 +28,10 @@ public class Application {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         initProperties();
-
-        ToolModel model = new ToolModel(new ChatGPT3_5Service(System.getProperty("openai.key")));
-        model.addTool(new CalcPlugin());
-        model.addTool(new DbPlugin());
-        model.addTool(new HttpPlugin());
-        model.addTool(new GoogleSearchPlugin(System.getProperty("google.key"), System.getProperty("google.search.cx")));
-
-//        PluginModel model = new CmdPluginModel(new ChatGPT3_5Service(System.getProperty("openai.key")));
-//        model.addPlugin(new CalcPlugin());
-//        model.addPlugin(new DbPlugin());
-//        model.addPlugin(new GoogleSearchPlugin(System.getProperty("google.key"), System.getProperty("google.search.cx")));
-
+        initProxy();
 
         HttpServer server = HttpServer.create(new InetSocketAddress(80), 0);
-        server.createContext("/api", new ApiHandler(model));
+        server.createContext("/api", new ApiHandler());
         server.createContext("/", new ResourceHandler("static"));
         server.setExecutor(Executors.newFixedThreadPool(1000));
         server.start();
@@ -73,14 +66,53 @@ public class Application {
         }
     }
 
+    private static void initProxy() {
+        final var proxyUrl = System.getProperty("proxy.url");
+        final var proxyPort = System.getProperty("proxy.port");
+        if (proxyUrl != null && proxyPort != null) {
+            ProxySelector.setDefault(ProxySelector.of(new InetSocketAddress(proxyUrl, Integer.parseInt(proxyPort))));
+        }
+    }
+
     static class ApiHandler implements HttpHandler {
 
+        public record User(String id, LinkedList<Message> messages, Model model){}
 
-        private final Map<String, List<Message>> sessionMessageMap = new HashMap<>();
-        private final Model model;
+        private final Map<String, User> userMap = new HashMap<>();
+        private final Map<String, Model> modelMap = new HashMap<>();
 
-        public ApiHandler(Model model) {
-            this.model = model;
+        public ApiHandler() {
+            final var openaiApiKey = System.getProperty("openai.key");
+            final var openaiApiUrl = System.getProperty("openai.url");
+            final var chatGPT35Service = new ChatGPT3_5Service(openaiApiKey, openaiApiUrl);
+            final var chatGPT4Service = new ChatGPT4Service(openaiApiKey, openaiApiUrl);
+
+            final var calcPlugin = new CalcPlugin();
+            final var dbPlugin = new DbPlugin();
+            final var httpPlugin = new HttpPlugin();
+            final var googleSearchPlugin = new GoogleSearchPlugin(System.getProperty("google.key"), System.getProperty("google.search.cx"));
+
+            ToolModel toolModel = new ToolModel(chatGPT35Service);
+            toolModel.addTool(calcPlugin);
+            toolModel.addTool(dbPlugin);
+            toolModel.addTool(httpPlugin);
+            toolModel.addTool(googleSearchPlugin);
+            this.modelMap.put(toolModel.getName(), toolModel);
+
+            PluginModel cmdPluginModel = new CmdPluginModel(chatGPT35Service);
+            cmdPluginModel.addPlugin(calcPlugin);
+            cmdPluginModel.addPlugin(dbPlugin);
+            cmdPluginModel.addPlugin(googleSearchPlugin);
+            this.modelMap.put(cmdPluginModel.getName(), cmdPluginModel);
+
+            PluginModel formatPluginModel = new FormatPluginModel(chatGPT35Service);
+            formatPluginModel.addPlugin(calcPlugin);
+            formatPluginModel.addPlugin(dbPlugin);
+            formatPluginModel.addPlugin(googleSearchPlugin);
+            this.modelMap.put(formatPluginModel.getName(), formatPluginModel);
+
+            NoneModel noneModel = new NoneModel(chatGPT35Service);
+            this.modelMap.put(noneModel.getName(), noneModel);
         }
 
         @Override
@@ -93,15 +125,20 @@ public class Application {
             final var hasSessionId = sessionId != null;
 
             if (t.getRequestMethod().equalsIgnoreCase("post")) {
-                final var question = new String(t.getRequestBody().readAllBytes());
+                final var req = new String(t.getRequestBody().readAllBytes());
+
+                final var appReq = Mapper.readValueNotError(req, AppReq.class);
 
                 if (!hasSessionId) {
                     sessionId = UUID.randomUUID().toString();
                     this.setSessionIdInCookie(t.getResponseHeaders(), sessionId);
                 }
-                final var messages = (LinkedList<Message>) this.sessionMessageMap.computeIfAbsent(sessionId, k -> new LinkedList<>());
-                messages.addLast(Message.user(question));
-                final var answer = this.model.question(messages);
+                String finalSessionId = sessionId;
+                final var user = this.userMap.computeIfAbsent(sessionId, k -> new User(finalSessionId, new LinkedList<>(), this.modelMap.get(Optional.ofNullable(appReq.model())
+                        .filter(this.modelMap::containsKey)
+                        .orElse("none"))));
+                user.messages().addLast(Message.user(req));
+                final var answer = user.model.question(user.messages());
 
                 t.sendResponseHeaders(200, answer.getBytes().length);
                 OutputStream os = t.getResponseBody();
@@ -111,7 +148,7 @@ public class Application {
             }
             if (t.getRequestMethod().equalsIgnoreCase("delete")) {
                 if (hasSessionId) {
-                    this.sessionMessageMap.remove(sessionId);
+                    this.userMap.remove(sessionId);
                 }
                 t.sendResponseHeaders(200, 0);
                 OutputStream os = t.getResponseBody();

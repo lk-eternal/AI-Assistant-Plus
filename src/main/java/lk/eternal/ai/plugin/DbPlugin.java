@@ -13,8 +13,12 @@ public class DbPlugin implements Plugin {
     private final String dbUser;
     private final String dbPassword;
 
-    public DbPlugin() throws ClassNotFoundException {
-        Class.forName("org.postgresql.Driver");
+    public DbPlugin() {
+        try {
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
         dbUrl = System.getProperty("db.url");
         dbUser = System.getProperty("db.username");
         dbPassword = System.getProperty("db.password");

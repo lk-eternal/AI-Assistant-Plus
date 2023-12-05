@@ -11,9 +11,9 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-public class PromptPluginModel extends PluginModel {
+public class FormatPluginModel extends PluginModel {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PromptPluginModel.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FormatPluginModel.class);
 
     private static final Pattern API_CHECK_PATTERN = Pattern.compile("动作[：:](.*?)\\n*输入[：:](.*)");
     private static final Pattern ANSWER_CHECK_PATTERN = Pattern.compile("最终结果[：:](.*)", Pattern.DOTALL);
@@ -38,12 +38,17 @@ public class PromptPluginModel extends PluginModel {
             助手:最终结果:今天成都多云,气温是8到19摄氏度. http://www.weather.com.cn/weather/101270101.shtml\s
             """;
 
-    public PromptPluginModel(GPTService gptService) {
+    public FormatPluginModel(GPTService gptService) {
         super(gptService);
     }
 
     protected String getPrompt() {
         return PROMPT;
+    }
+
+    @Override
+    public String getName() {
+        return "format";
     }
 
     @Override

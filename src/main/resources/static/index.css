@@ -8,6 +8,24 @@
     border-radius: 3px;
 }
 
+.loading::after {
+  content: '...';
+  animation: loading 2s infinite;
+  display: inline-block;
+}
+
+@keyframes loading {
+  0% {
+    content: '.';
+  }
+  33% {
+    content: '..';
+  }
+  66% {
+    content: '...';
+  }
+}
+
 body {
     display: flex;
     flex-direction: column;
@@ -17,7 +35,7 @@ body {
     height: 100vh;
     overflow: hidden;
     font-family: 'Roboto', sans-serif;
-    background-color: grey;
+    background-color: rgb(52, 53, 65);
     margin: 0;
     padding: 0;
 }
@@ -48,7 +66,7 @@ button:hover {
     min-height: 50%;
     max-height: 80%;
     border: 1px solid #ccc;
-    background-color: white;
+    background-color: #e6eaf2;
     padding: 1vh;
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
     border-radius: 10px;
@@ -187,7 +205,6 @@ div .copy-button {
     width: -webkit-fill-available;
     border: 1px solid #ccc;
     border-width: 1px 0 0 0;
-    background-color: white;
     padding: 10px;
     resize: none;
     outline: none;
@@ -197,7 +214,7 @@ div .copy-button {
 .inputBox textarea{
     width: inherit;
     border: none;
-    background-color: white;
+    background-color: unset;
     overflow-y: auto;
     font-family: 'Roboto', sans-serif;
     resize: none;

@@ -25,19 +25,25 @@ public class ChatGPTService implements GPTService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChatGPT4Service.class);
 
-    private final static String OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
+    private static final HttpClient HTTP_CLIENT;
 
-    private final static HttpClient HTTP_CLIENT = HttpClient.newBuilder()
-            .version(HttpClient.Version.HTTP_1_1)
-            .proxy(ProxySelector.of(new InetSocketAddress("127.0.0.1", 1080)))
-            .connectTimeout(Duration.ofMinutes(1))
-            .build();
+    static {
+        final var builder = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofMinutes(1));
+        if (ProxySelector.getDefault() != null) {
+            builder.proxy(ProxySelector.getDefault());
+        }
+        HTTP_CLIENT = builder.build();
+    }
 
     private final String openaiApiKey;
+    private final String openaiApiUrl;
     private final String model;
 
-    public ChatGPTService(String openaiApiKey, String model) {
+    public ChatGPTService(String openaiApiKey, String openaiApiUrl, String model) {
         this.openaiApiKey = openaiApiKey;
+        this.openaiApiUrl = openaiApiUrl;
         this.model = model;
     }
 
@@ -47,7 +53,7 @@ public class ChatGPTService implements GPTService {
                 .orElseThrow(() -> new GPTException("req can not be null"));
 
         final HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(OPENAI_API_URL))
+                .uri(URI.create(this.openaiApiUrl))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + this.openaiApiKey)
                 .POST(HttpRequest.BodyPublishers.ofString(reqStr))

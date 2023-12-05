@@ -51,6 +51,11 @@ public class CmdPluginModel extends PluginModel {
     }
 
     @Override
+    public String getName() {
+        return "cmd";
+    }
+
+    @Override
     public String question(LinkedList<Message> messages) {
         LOGGER.info("User: {}", messages.getLast().content());
         var answer = request(messages, null);

@@ -4,6 +4,7 @@ package lk.eternal.ai.plugin;
 import lk.eternal.ai.dto.req.Parameters;
 import lk.eternal.ai.dto.resp.SearchResponse;
 import lk.eternal.ai.util.Mapper;
+import okhttp3.internal.proxy.NullProxySelector;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -17,14 +18,22 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 public class GoogleSearchPlugin implements Plugin {
 
-    private final static HttpClient HTTP_CLIENT = HttpClient.newBuilder()
-            .version(HttpClient.Version.HTTP_1_1)
-            .proxy(ProxySelector.of(new InetSocketAddress("127.0.0.1", 1080)))
-            .connectTimeout(Duration.ofMinutes(1))
-            .build();
+    private final static HttpClient HTTP_CLIENT;
+
+    static {
+        final var builder = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofMinutes(1));
+        if (ProxySelector.getDefault() != null) {
+            builder.proxy(ProxySelector.getDefault());
+        }
+        HTTP_CLIENT = builder.build();
+    }
 
     private final String key;
     private final String cx;

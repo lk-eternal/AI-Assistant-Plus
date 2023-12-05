@@ -22,6 +22,11 @@ public class NoneModel implements Model {
     }
 
     @Override
+    public String getName() {
+        return "none";
+    }
+
+    @Override
     public String question(LinkedList<Message> messages) {
         LOGGER.info("User: {}", messages.getLast().content());
         var answer = request(messages);

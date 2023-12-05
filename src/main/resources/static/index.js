@@ -3,10 +3,21 @@ document.addEventListener('DOMContentLoaded', function() {
     var chatBox = document.getElementById('chatBox');
     var sendBtn = document.getElementById('sendBtn');
     var clearBtn = document.getElementById('clearBtn');
+    var modelDropdown = document.getElementById('modelDropdown');
+
+
 
     window.addEventListener("beforeunload", clearMessages);
     clearBtn.addEventListener('click', clearMessages);
     sendBtn.addEventListener('click', sendMessage);
+
+    document.getElementById('modelSelectBtn').addEventListener('click', function() {
+        document.getElementById('modelDropdown').style.display = 'block';
+    });
+    modelDropdown.addEventListener('change', function() {
+        document.getElementById('modelDropdown').style.display = 'none';
+        clearMessages();
+    });
 
     inputTextArea.addEventListener('keydown', function(event) {
         if (event.key === 'Enter') {
@@ -23,38 +34,44 @@ document.addEventListener('DOMContentLoaded', function() {
         document.cookie = "cookieName=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         inputTextArea.disabled = false;
         sendBtn.disabled = false;
+        inputTextArea.focus();
     }
 
     async function sendMessage() {
-        var message = inputTextArea.value;
-        if(message == undefined || message == ''){
-            message = inputTextArea.placeholder;
+        var question = inputTextArea.value;
+        if(question == undefined || question == ''){
+            question = inputTextArea.placeholder;
         }
         inputTextArea.value = '';
 
-        var divElement = document.createElement('div');
-        divElement.textContent = message;
-        chatBox.appendChild(divElement);
-        chatBox.scrollTop = chatBox.scrollHeight;
+        var reqDiv = document.createElement('div');
+        reqDiv.textContent = question;
+        chatBox.appendChild(reqDiv);
 
         inputTextArea.disabled = true;
         sendBtn.disabled = true;
+
+
+        var respDiv = document.createElement('div');
+        respDiv.innerHTML = '';
+        respDiv.classList.add('loading');
+        chatBox.appendChild(respDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
 
         var response = await fetch('/api', {
             method: 'POST',
             headers: {
                 'Content-Type': 'text/plain'
             },
-            body: message
+            body: JSON.stringify({'model': modelDropdown.value, 'question': question})
         });
 
         if (response.ok) {
             var data = await response.text();
-            var divElement = document.createElement('div');
-            divElement.innerHTML = marked.parse(data);
+            respDiv.innerHTML = marked.parse(data);
 
             // 获取 p 元素中的所有 pre 元素
-            var preElements = divElement.getElementsByTagName('pre');
+            var preElements = respDiv.getElementsByTagName('pre');
 
             // 为每个 pre 元素添加点击事件
             for (var i = 0; i < preElements.length; i++) {
@@ -87,14 +104,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 2000);
                 });
             }
-
-            chatBox.appendChild(divElement);
         } else {
             console.error('Error:', response.status, response.statusText);
-            chatBox.innerHTML += '<div>' + response.status + ':' + response.statusText + '</div>';
+            respDiv.innerHTML = '<div>' + response.status + ':' + response.statusText + '</div>';
         }
+        respDiv.classList.remove('loading');
         chatBox.scrollTop = chatBox.scrollHeight;
         inputTextArea.disabled = false;
         sendBtn.disabled = false;
+        inputTextArea.focus();
     }
 });
