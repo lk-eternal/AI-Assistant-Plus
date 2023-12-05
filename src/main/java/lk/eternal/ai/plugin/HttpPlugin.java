@@ -1,12 +1,15 @@
 package lk.eternal.ai.plugin;
 
 
+import lk.eternal.ai.dto.req.Parameters;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class HttpPlugin implements Plugin {
@@ -23,13 +26,19 @@ public class HttpPlugin implements Plugin {
 
     @Override
     public String description() {
-        return "访问对应网址的工具,参数是网址.请求成功会返回整个网页文本内容,请求失败会返回错误码,从中提取需要的信息.因此你获得了获取实时网页信息的能力,当用户需要查询实时信息时建议使用本工具.";
+        return "访问对应网址的工具,参数是网址.请求成功会返回整个网页文本内容,请求失败会返回错误码,从中提取需要的信息.因此你获得了获取实时网页信息的能力,当且仅当用户需要查询实时信息时使用本工具.";
     }
 
-    public String execute(String url) {
+    @Override
+    public Parameters parameters() {
+        return Parameters.singleton("url", "string", "网址");
+    }
+
+    @Override
+    public String execute(Object arg) {
         try {
             final HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
+                    .uri(URI.create(arg.toString()))
                     .build();
             final var response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             final String body = response.body();
@@ -40,7 +49,10 @@ public class HttpPlugin implements Plugin {
         } catch (IOException | InterruptedException e) {
             return "请求出错了:" + e.getMessage();
         }
+    }
 
+    public String execute(Map<String, Object> url) {
+        return execute(url.get("url"));
     }
 
 

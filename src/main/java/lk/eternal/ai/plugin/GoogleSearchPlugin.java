@@ -1,6 +1,7 @@
 package lk.eternal.ai.plugin;
 
 
+import lk.eternal.ai.dto.req.Parameters;
 import lk.eternal.ai.dto.resp.SearchResponse;
 import lk.eternal.ai.util.Mapper;
 
@@ -8,11 +9,14 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 public class GoogleSearchPlugin implements Plugin {
 
@@ -37,13 +41,19 @@ public class GoogleSearchPlugin implements Plugin {
 
     @Override
     public String description() {
-        return "基于谷歌API的搜索引擎,参数是搜索内容,返回相关内容网页的标题,简介和链接,可以进一步使用http工具打开链接查看具体内容;因此你获得了获取实时信息的能力,当用户需要查询实时信息时建议使用本工具.";
+        return "(注意:仅当在用户的问题中包含实时性的内容比如出现'查查','搜索','时间'和'最新'等关键字时使用本工具.)基于谷歌API的搜索引擎,参数是搜索内容,返回相关内容网页的标题,简介和链接";
     }
 
-    public String execute(String q) {
+    @Override
+    public Parameters parameters() {
+        return Parameters.singleton("q", "string", "搜索内容");
+    }
+
+    @Override
+    public String execute(Object arg) {
         try {
             final HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s&start=1&num=10".formatted(this.key, this.cx, q)))
+                    .uri(URI.create("https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s&start=1&num=10".formatted(this.key, this.cx, URLEncoder.encode(arg.toString(), StandardCharsets.UTF_8))))
                     .build();
             final var response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             final String body = response.body();
@@ -58,6 +68,10 @@ public class GoogleSearchPlugin implements Plugin {
         } catch (IOException | InterruptedException e) {
             return "请求出错了:" + e.getMessage();
         }
+    }
+
+    public String execute(Map<String, Object> args) {
+        return execute(args.get("q"));
     }
 
     public String extractInformation(SearchResponse response) {

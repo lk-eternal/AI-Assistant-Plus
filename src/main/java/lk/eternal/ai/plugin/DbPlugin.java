@@ -1,9 +1,12 @@
 package lk.eternal.ai.plugin;
 
 
+import lk.eternal.ai.dto.req.Parameters;
+
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.util.Map;
 
 public class DbPlugin implements Plugin {
     private final String dbUrl;
@@ -27,9 +30,15 @@ public class DbPlugin implements Plugin {
         return "执行数据库的工具(默认已经连接上数据库),参数是需要执行的sql语句,数据库类型是Postgresql";
     }
 
-    public String execute(String sql) {
+    @Override
+    public Parameters parameters() {
+        return Parameters.singleton("sql", "string", "sql语句");
+    }
+
+    @Override
+    public String execute(Object arg) {
         try (final var connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
-             final var statement = connection.prepareStatement(sql)) {
+             final var statement = connection.prepareStatement(arg.toString())) {
             boolean isResultSet = statement.execute();  // 执行 SQL 语句
 
             String resp;
@@ -73,5 +82,9 @@ public class DbPlugin implements Plugin {
         } catch (Exception e) {
             return e.getMessage();
         }
+    }
+
+    public String execute(Map<String, Object> args) {
+        return execute(args.get("sql"));
     }
 }

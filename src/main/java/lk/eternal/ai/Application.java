@@ -5,14 +5,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 import lk.eternal.ai.dto.req.Message;
-import lk.eternal.ai.model.Model;
-import lk.eternal.ai.model.NoneModel;
-import lk.eternal.ai.model.PluginModel;
-import lk.eternal.ai.model.PromptModel;
-import lk.eternal.ai.plugin.CalcPlugin;
-import lk.eternal.ai.plugin.DbPlugin;
-import lk.eternal.ai.plugin.GoogleSearchPlugin;
-import lk.eternal.ai.plugin.HttpPlugin;
+import lk.eternal.ai.model.*;
+import lk.eternal.ai.plugin.*;
 import lk.eternal.ai.service.ChatGPT3_5Service;
 import lk.eternal.ai.util.ContentTypeUtil;
 import org.slf4j.Logger;
@@ -31,13 +25,16 @@ public class Application {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         initProperties();
 
-//        Model model = new NoneModel(new ChatGPT3_5Service(System.getProperty("openai.key")));
+        ToolModel model = new ToolModel(new ChatGPT3_5Service(System.getProperty("openai.key")));
+        model.addTool(new CalcPlugin());
+        model.addTool(new DbPlugin());
+        model.addTool(new HttpPlugin());
+        model.addTool(new GoogleSearchPlugin(System.getProperty("google.key"), System.getProperty("google.search.cx")));
 
-        PluginModel model = new PromptModel(new ChatGPT3_5Service(System.getProperty("openai.key")));
-        model.addPlugin(new CalcPlugin());
-        model.addPlugin(new DbPlugin());
-        model.addPlugin(new GoogleSearchPlugin(System.getProperty("google.key"), System.getProperty("google.search.cx")));
-        model.addPlugin(new HttpPlugin());
+//        PluginModel model = new CmdPluginModel(new ChatGPT3_5Service(System.getProperty("openai.key")));
+//        model.addPlugin(new CalcPlugin());
+//        model.addPlugin(new DbPlugin());
+//        model.addPlugin(new GoogleSearchPlugin(System.getProperty("google.key"), System.getProperty("google.search.cx")));
 
 
         HttpServer server = HttpServer.create(new InetSocketAddress(80), 0);

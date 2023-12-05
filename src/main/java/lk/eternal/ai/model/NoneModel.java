@@ -1,6 +1,7 @@
 package lk.eternal.ai.model;
 
 import lk.eternal.ai.dto.req.Message;
+import lk.eternal.ai.exception.GPTException;
 import lk.eternal.ai.service.GPTService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +34,11 @@ public class NoneModel implements Model {
         while (messages.size() > MAX_HISTORY || messages.stream().mapToInt(m -> m.content().length()).sum() > 128000) {
             messages.removeFirst();
         }
-        return this.gptService.request(messages);
+        try {
+            return this.gptService.request(messages).getContent();
+        } catch (GPTException e) {
+            return e.getMessage();
+        }
     }
 
 }

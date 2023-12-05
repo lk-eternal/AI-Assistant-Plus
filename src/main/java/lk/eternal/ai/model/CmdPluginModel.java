@@ -6,14 +6,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-public class CmdModel extends PluginModel {
+public class CmdPluginModel extends PluginModel {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CmdModel.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CmdPluginModel.class);
 
     private static final Pattern API_CHECK_PATTERN = Pattern.compile("\\[(\\w+)](.+?)\\[\\1]");
 
@@ -43,7 +42,7 @@ public class CmdModel extends PluginModel {
             """;
 
 
-    public CmdModel(GPTService gptService) {
+    public CmdPluginModel(GPTService gptService) {
         super(gptService);
     }
 
@@ -54,7 +53,7 @@ public class CmdModel extends PluginModel {
     @Override
     public String question(LinkedList<Message> messages) {
         LOGGER.info("User: {}", messages.getLast().content());
-        var answer = request(messages);
+        var answer = request(messages, null);
         while (true) {
             LOGGER.info("AI: {}", answer);
             final var matcher = API_CHECK_PATTERN.matcher(answer);
@@ -69,7 +68,7 @@ public class CmdModel extends PluginModel {
                 break;
             }
         }
-        messages.removeIf(Message::think);
+        messages.removeIf(m -> Boolean.TRUE.equals(m.think()));
         messages.addLast(Message.assistant(answer, false));
         return answer;
     }

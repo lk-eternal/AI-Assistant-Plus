@@ -11,9 +11,9 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-public class PromptModel extends PluginModel {
+public class PromptPluginModel extends PluginModel {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PromptModel.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(PromptPluginModel.class);
 
     private static final Pattern API_CHECK_PATTERN = Pattern.compile("动作[：:](.*?)\\n*输入[：:](.*)");
     private static final Pattern ANSWER_CHECK_PATTERN = Pattern.compile("最终结果[：:](.*)", Pattern.DOTALL);
@@ -38,7 +38,7 @@ public class PromptModel extends PluginModel {
             助手:最终结果:今天成都多云,气温是8到19摄氏度. http://www.weather.com.cn/weather/101270101.shtml\s
             """;
 
-    public PromptModel(GPTService gptService) {
+    public PromptPluginModel(GPTService gptService) {
         super(gptService);
     }
 
@@ -49,7 +49,7 @@ public class PromptModel extends PluginModel {
     @Override
     public String question(LinkedList<Message> messages) {
         LOGGER.info("User: {}", messages.getLast().content());
-        var answer = request(messages);
+        var answer = request(messages, null);
         while (true) {
             LOGGER.info("AI: {}", answer);
             final var answerMatcher = ANSWER_CHECK_PATTERN.matcher(answer);
@@ -64,12 +64,12 @@ public class PromptModel extends PluginModel {
                 final var content = Optional.ofNullable(executePlugin(cmd, param)).filter(Predicate.not(String::isBlank)).orElse("无数据");
                 messages.addLast(Message.assistant(answer, true));
                 messages.addLast(Message.system(content, true));
-                answer = request(messages);
+                answer = request(messages, null);
             } else {
                 break;
             }
         }
-        messages.removeIf(Message::think);
+        messages.removeIf(m -> Boolean.TRUE.equals(m.think()));
         messages.addLast(Message.assistant(answer, false));
         return answer;
     }

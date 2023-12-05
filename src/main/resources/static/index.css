@@ -29,7 +29,7 @@ button:hover {
 }
 
 .title{
-    font-size: 3em;
+    font-size: 3vh;
     line-height: 1.5;
     color: white;
 }
@@ -49,7 +49,7 @@ button:hover {
     max-height: 80%;
     border: 1px solid #ccc;
     background-color: white;
-    padding: 10px;
+    padding: 1vh;
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
     border-radius: 10px;
 }
@@ -60,10 +60,9 @@ button:hover {
         width: -webkit-fill-available;
         max-height: none;
         border: none;
-        padding: 20px;
         box-shadow: none;
         border-radius: 0;
-        font-size: 1.25em;
+        font-size: 4vw;
     }
 }
 
@@ -76,26 +75,13 @@ button:hover {
     padding: 0px 10px 10px 10px;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
-    #chatBox {
-        height: inherit;
-    }
-}
-
 #chatBox > div {
     width: fit-content;
     display: inline-block;
-    font-size: 1em;
-    padding: 10px;
-    margin: 0.5em 0em 0.5em 0em;
+    padding: 1vh;
+    margin: 0.5vh 0;
     border-radius: 10px;
     box-shadow: 2px 2px 5px #888888;
-}
-
-@media (max-width: 1000px) and (min-height: 800px) {
-    #chatBox > div {
-        font-size: 2em;
-    }
 }
 
 #chatBox > div:nth-child(odd) {
@@ -110,13 +96,28 @@ button:hover {
     align-self: flex-end;
 }
 
+
+#chatBox > div code{
+    color: #f8f8ff;
+    background-color: #2b2b2b;
+    border-radius: 3px;
+    box-shadow: 2px 2px 5px black;
+    max-height: 300px;
+    overflow: auto;
+    margin: 5px;
+}
+
 #chatBox > div p{
+    margin: 0px;
+}
+
+#chatBox > div ul {
     margin: 0px;
 }
 
 #chatBox > div pre {
     position: relative;
-    line-height: 1.25rem;
+    line-height: 2vh;
     color: #f8f8ff;
     background-color: #2b2b2b;
     border-radius: 5px;
@@ -126,11 +127,11 @@ button:hover {
     white-space: pre-wrap;
     word-wrap: break-word;
 }
-
-@media (max-width: 1000px) and (min-height: 800px) {
-    #chatBox > div pre{
-        line-height: 2rem;
-    }
+#chatBox > div pre code{
+    background-color: unset;
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
 }
 
 #chatBox > div a {
@@ -140,10 +141,9 @@ button:hover {
     border-radius: 3px;
     box-shadow: 2px 2px 5px black;
     max-height: 300px;
-    max-width: 250px
+    max-width: 250px;
     overflow: auto;
     margin: 0 5px;
-    font-size: 1em;
     cursor: pointer;
 }
 
@@ -152,6 +152,9 @@ button:hover {
 }
 
 div .copy-button {
+    width: 10%;
+    height: 3vh;
+    font-size: 0.75em;
     position: absolute;
     top: 10px;
     right: 10px;
@@ -163,31 +166,6 @@ div .copy-button {
     cursor: pointer;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
-    div .copy-button {
-        width: 6em;
-        height: 3em;
-        font-size: 0.5em;
-    }
-}
-
-p > code{
-    color: #f8f8ff;
-    background-color: #2b2b2b;
-    border-radius: 3px;
-    box-shadow: 2px 2px 5px black;
-    max-height: 300px;
-    overflow: auto;
-    margin: 5px;
-    font-size: 1.25em;
-}
-
-@media (max-width: 1000px) and (min-height: 800px) {
-    p > code{
-        font-size: 1em;
-    }
-}
-
 .toolBox {
     display: flex;
     flex-direction: row;
@@ -196,23 +174,16 @@ p > code{
 }
 
 .toolBox button{
-    width: 2.5em;
-    height: 2.5em;
+    width: 5vh;
+    height: 5vh;
     border: 1px solid #ccc;
     border-radius: 5px;
-}
-
-@media (max-width: 1000px) and (min-height: 800px) {
-    .toolBox button{
-        width: 6em;
-        height: 6em;
-    }
 }
 
 .inputBox {
     display: flex;
     flex-direction: row;
-    height: 5em;
+    height: 10vh;
     width: -webkit-fill-available;
     border: 1px solid #ccc;
     border-width: 1px 0 0 0;
@@ -222,48 +193,31 @@ p > code{
     outline: none;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
-    .inputBox {
-        height: 8em;
-    }
-}
 
 .inputBox textarea{
     width: inherit;
     border: none;
     background-color: white;
     overflow-y: auto;
-    font-size: 1em;
     font-family: 'Roboto', sans-serif;
     resize: none;
     outline: none;
     border: none;
-}
-
-@media (max-width: 1000px) and (min-height: 800px) {
-    .inputBox textarea{
-        font-size: 2em;
-    }
+    font-size: 1em;
 }
 
 .inputBox button {
-    width: 2.5em;
-    height: 2.5em;
+    width: 5vh;
+    height: 5vh;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: #009688;
     border: none;
     color: white;
-    font-size: 1em;
     box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
     border-radius: 5px;
     cursor: pointer;
     margin-top: auto;
-}
-
-@media (max-width: 1000px) and (min-height: 800px) {
-    .inputBox button {
-        font-size: 2em;
-    }
+    font-size: 1em;
 }
