@@ -10,6 +10,7 @@ import lk.eternal.ai.model.*;
 import lk.eternal.ai.plugin.*;
 import lk.eternal.ai.service.ChatGPT3_5Service;
 import lk.eternal.ai.service.ChatGPT4Service;
+import lk.eternal.ai.service.TongYiQianWenService;
 import lk.eternal.ai.util.ContentTypeUtil;
 import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
@@ -82,10 +83,14 @@ public class Application {
         private final Map<String, Model> modelMap = new HashMap<>();
 
         public ApiHandler() {
-            final var openaiApiKey = System.getProperty("openai.key");
             final var openaiApiUrl = System.getProperty("openai.url");
+            final var openaiApiKey = System.getProperty("openai.key");
+
+            final var tyqwApiKey = System.getProperty("tyqw.key");
+
             final var chatGPT35Service = new ChatGPT3_5Service(openaiApiKey, openaiApiUrl);
             final var chatGPT4Service = new ChatGPT4Service(openaiApiKey, openaiApiUrl);
+            final var tyqwService = new TongYiQianWenService(tyqwApiKey);
 
             final var calcPlugin = new CalcPlugin();
             final var dbPlugin = new DbPlugin();
@@ -99,15 +104,17 @@ public class Application {
             toolModel.addPlugin(googleSearchPlugin);
             this.modelMap.put(toolModel.getName(), toolModel);
 
-            PluginModel cmdPluginModel = new CmdPluginModel(chatGPT35Service);
+            PluginModel cmdPluginModel = new CmdPluginModel(tyqwService);
             cmdPluginModel.addPlugin(calcPlugin);
             cmdPluginModel.addPlugin(dbPlugin);
+            cmdPluginModel.addPlugin(httpPlugin);
             cmdPluginModel.addPlugin(googleSearchPlugin);
             this.modelMap.put(cmdPluginModel.getName(), cmdPluginModel);
 
-            PluginModel formatPluginModel = new FormatPluginModel(chatGPT35Service);
+            PluginModel formatPluginModel = new FormatPluginModel(tyqwService);
             formatPluginModel.addPlugin(calcPlugin);
             formatPluginModel.addPlugin(dbPlugin);
+            formatPluginModel.addPlugin(httpPlugin);
             formatPluginModel.addPlugin(googleSearchPlugin);
             this.modelMap.put(formatPluginModel.getName(), formatPluginModel);
 

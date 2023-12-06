@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
+
     var chatBox = document.getElementById('chatBox');
 
     var clearBtn = document.getElementById('clearBtn');
@@ -23,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     sendBtn.addEventListener('click', sendMessage);
 
     function openSettingModal() {
-        settingBox.style.display = 'block';
+        settingBox.style.display = 'flex';
     }
     function closeSettingModal() {
         settingBox.style.display = 'none';
@@ -74,6 +75,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (response.ok) {
             var data = await response.text();
             respDiv.innerHTML = marked.parse(data);
+
+            respDiv.querySelectorAll('pre code').forEach((el) => {
+                hljs.highlightElement(el);
+            });
 
             // 获取 p 元素中的所有 pre 元素
             var preElements = respDiv.getElementsByTagName('pre');

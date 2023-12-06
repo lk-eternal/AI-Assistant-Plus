@@ -64,6 +64,7 @@ button:hover {
     flex-direction: column;
     justify-content: center;
     width: 50%;
+    min-width: 800px;
     min-height: 50%;
     max-height: 80%;
     border: 1px solid #ccc;
@@ -197,6 +198,7 @@ div .copy-button {
     height: 5vh;
     border: 1px solid #ccc;
     border-radius: 5px;
+    margin: 0 10px 0 0;
 }
 
 #settingBox {
@@ -273,4 +275,8 @@ div .copy-button {
     cursor: pointer;
     margin-top: auto;
     font-size: 1em;
+}
+
+pre code.hljs {
+    padding: 0 !important;
 }

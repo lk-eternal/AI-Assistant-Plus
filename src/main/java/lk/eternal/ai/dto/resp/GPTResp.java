@@ -2,7 +2,6 @@ package lk.eternal.ai.dto.resp;
 
 import lk.eternal.ai.dto.req.Message;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
