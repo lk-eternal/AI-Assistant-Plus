@@ -1,76 +1,95 @@
 package lk.eternal.ai.model;
 
 
-import lk.eternal.ai.dto.req.Function;
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.dto.req.Tool;
+import lk.eternal.ai.dto.resp.GPTResp;
 import lk.eternal.ai.exception.GPTException;
 import lk.eternal.ai.plugin.Plugin;
 import lk.eternal.ai.service.GPTService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public abstract class PluginModel implements Model {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PluginModel.class);
 
-
-    private static final String PROMPT = """
-            你现在是LK公司的强大且无所不知的一个具有执行工具能力的高级AI助手,你需要尽可能的去回答问题
-            你可以使用以下的工具:[(工具名和描述}]
-            ${plugins}
-                        
-            """;
-
     private static final int MAX_HISTORY = 10;
 
     protected final GPTService gptService;
-    protected Message promptMessage;
 
-    private final Map<String, Plugin> pluginMap;
-
-    private final List<Tool> tools;
+    protected final Map<String, Plugin> pluginMap;
 
     public PluginModel(GPTService gptService) {
         this.pluginMap = new HashMap<>();
         this.gptService = gptService;
-        this.tools = new ArrayList<>();
     }
 
     public void addPlugin(Plugin plugin) {
         this.pluginMap.put(plugin.name(), plugin);
-        this.promptMessage = Message.system(PROMPT.replace("${plugins}", getPluginDescriptions()) + getPrompt(), false);
-        this.tools.add(new Tool(new Function(plugin.name(), plugin.description(), plugin.parameters())));
     }
 
-    abstract protected String getPrompt();
+    @Override
+    public String question(LinkedList<Message> messages) {
+        LOGGER.info("User: {}", messages.getLast().content());
+        String resp;
+        try {
+            GPTResp answer = request(messages, getStops(), getTools());
+            while (true) {
+                final var aiMessage = answer.getMessage();
+                final var pluginCalls = getPluginCall(aiMessage);
+                if (pluginCalls == null || pluginCalls.isEmpty()) {
+                    resp = answer.getContent();
+                    LOGGER.info("AI: {}", resp);
+                    messages.addLast(aiMessage);
+                    break;
+                }
+                messages.addLast(Message.assistant(aiMessage.content(), aiMessage.tool_calls()));
+                for (PluginCall pluginCall : pluginCalls) {
+                    final var id = pluginCall.id();
+                    final var name = pluginCall.name();
+                    final var args = pluginCall.args();
+                    final var s = executePlugin(name, args);
+                    messages.add(Message.tool(id, name, s));
+                }
+                answer = request(messages, getStops(), getTools());
+            }
+        } catch (Exception e) {
+            messages.removeLast();
+            return e.getMessage();
+        }
 
-    private String getPluginDescriptions() {
-        return this.pluginMap.entrySet().stream().map(e -> e.getKey() + ":" + e.getValue().description())
-                .collect(Collectors.joining("\n"));
+        messages.removeIf(m -> Boolean.TRUE.equals(m.think()));
+        messages.addLast(Message.assistant(resp, false));
+        return resp;
     }
 
-    protected String request(LinkedList<Message> messages) {
-        return request(messages, null);
-    }
-
-    protected String request(LinkedList<Message> messages, List<String> stops) {
-        while (messages.size() > MAX_HISTORY || messages.stream().mapToInt(m -> m.content().length()).sum() > 128000 + this.promptMessage.content().length()) {
+    protected GPTResp request(LinkedList<Message> messages, List<String> stops, List<Tool> tools) throws GPTException {
+        final var prompt = getPrompt();
+        while (messages.size() > MAX_HISTORY) {
             messages.removeFirst();
         }
         final var requestMessages = new LinkedList<>(messages);
-        requestMessages.addFirst(this.promptMessage);
-        try {
-            return this.gptService.request(requestMessages, stops).getContent();
-        } catch (GPTException e) {
-            return e.getMessage();
+        if (prompt != null) {
+            requestMessages.addFirst(Message.system(prompt, false));
         }
+        return this.gptService.request(requestMessages, stops, tools);
     }
 
-    protected String executePlugin(String pluginName, String param) {
+    protected abstract String getPrompt();
+
+    protected abstract List<String> getStops();
+
+    protected abstract List<Tool> getTools();
+
+    protected abstract List<PluginCall> getPluginCall(Message message);
+
+    protected String executePlugin(String pluginName, Map<String, Object> param) {
         if (!this.pluginMap.containsKey(pluginName)) {
             return "不支持该工具";
         }
@@ -81,7 +100,11 @@ public abstract class PluginModel implements Model {
         } catch (Exception e) {
             return "执行异常:" + e.getMessage();
         }
-        LOGGER.info("System: {}", result);
+        LOGGER.info("System: {}{}", result.substring(0, Math.min(result.length(), 100)).replaceAll("\n", ""), result.length() > 100 ? "..." : "");
         return result;
+    }
+
+    public record PluginCall(String id, String name, Map<String, Object> args) {
+
     }
 }

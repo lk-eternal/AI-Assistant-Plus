@@ -59,10 +59,10 @@ public class GoogleSearchPlugin implements Plugin {
     }
 
     @Override
-    public String execute(Object arg) {
+    public String execute(Map<String, Object> args) {
         try {
             final HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s&start=1&num=10".formatted(this.key, this.cx, URLEncoder.encode(arg.toString(), StandardCharsets.UTF_8))))
+                    .uri(URI.create("https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s&start=1&num=10".formatted(this.key, this.cx, URLEncoder.encode(args.get("q").toString(), StandardCharsets.UTF_8))))
                     .build();
             final var response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             final String body = response.body();
@@ -77,10 +77,6 @@ public class GoogleSearchPlugin implements Plugin {
         } catch (IOException | InterruptedException e) {
             return "请求出错了:" + e.getMessage();
         }
-    }
-
-    public String execute(Map<String, Object> args) {
-        return execute(args.get("q"));
     }
 
     public String extractInformation(SearchResponse response) {

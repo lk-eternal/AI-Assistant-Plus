@@ -44,6 +44,7 @@ button:hover {
     box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.4);
     transform: scale(1.05);
     transition: all 0.2s;
+    cursor: pointer;
 }
 
 .title{
@@ -196,6 +197,41 @@ div .copy-button {
     height: 5vh;
     border: 1px solid #ccc;
     border-radius: 5px;
+}
+
+#settingBox {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    background: #2b2b2b;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+}
+
+#settingBox p{
+    margin: 0 0 0 3vh;
+    font-size: 0.75em;
+    color: #ccc;
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    #settingBox input{
+        margin: 0 0 0 3vw;
+        width: 3vw;
+        height: 3vw;
+    }
+}
+
+#closeBtn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
 }
 
 .inputBox {

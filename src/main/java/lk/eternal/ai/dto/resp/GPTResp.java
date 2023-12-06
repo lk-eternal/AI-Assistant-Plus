@@ -10,24 +10,6 @@ import java.util.function.Predicate;
 public record GPTResp(String id, String object, long created, String model, List<Choice> choices, Usage usage,
                       String system_fingerprint, Error error) {
 
-    public boolean isToolCall() {
-        return Optional.ofNullable(choices)
-                .filter(Predicate.not(List::isEmpty))
-                .map(cs -> cs.get(0))
-                .map(Choice::finish_reason)
-                .map("tool_calls"::equals)
-                .orElse(false);
-    }
-
-    public List<ToolCall> getToolCalls() {
-        return Optional.ofNullable(choices)
-                .filter(Predicate.not(List::isEmpty))
-                .map(cs -> cs.get(0))
-                .map(GPTResp.Choice::message)
-                .map(Message::tool_calls)
-                .orElseGet(Collections::emptyList);
-    }
-
     public Message getMessage() {
         return Optional.ofNullable(choices)
                 .filter(Predicate.not(List::isEmpty))

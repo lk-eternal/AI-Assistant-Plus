@@ -35,10 +35,10 @@ public class HttpPlugin implements Plugin {
     }
 
     @Override
-    public String execute(Object arg) {
+    public String execute(Map<String, Object> args) {
         try {
             final HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(arg.toString()))
+                    .uri(URI.create(args.get("url").toString()))
                     .build();
             final var response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             final String body = response.body();
@@ -50,11 +50,6 @@ public class HttpPlugin implements Plugin {
             return "请求出错了:" + e.getMessage();
         }
     }
-
-    public String execute(Map<String, Object> url) {
-        return execute(url.get("url"));
-    }
-
 
     public static String html2Text(String inputString) {
         String htmlStr = inputString;

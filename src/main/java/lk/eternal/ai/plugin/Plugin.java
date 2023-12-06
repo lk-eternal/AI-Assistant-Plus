@@ -13,7 +13,5 @@ public interface Plugin {
 
     Parameters parameters();
 
-    String execute(Object arg);
-
     String execute(Map<String, Object> args);
 }

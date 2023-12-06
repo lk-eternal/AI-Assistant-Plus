@@ -36,7 +36,7 @@ public class NoneModel implements Model {
     }
 
     protected String request(LinkedList<Message> messages) {
-        while (messages.size() > MAX_HISTORY || messages.stream().mapToInt(m -> m.content().length()).sum() > 128000) {
+        while (messages.size() > MAX_HISTORY) {
             messages.removeFirst();
         }
         try {

@@ -92,11 +92,11 @@ public class Application {
             final var httpPlugin = new HttpPlugin();
             final var googleSearchPlugin = new GoogleSearchPlugin(System.getProperty("google.key"), System.getProperty("google.search.cx"));
 
-            ToolModel toolModel = new ToolModel(chatGPT35Service);
-            toolModel.addTool(calcPlugin);
-            toolModel.addTool(dbPlugin);
-            toolModel.addTool(httpPlugin);
-            toolModel.addTool(googleSearchPlugin);
+            PluginModel toolModel = new ToolPluginModel(chatGPT35Service);
+            toolModel.addPlugin(calcPlugin);
+            toolModel.addPlugin(dbPlugin);
+            toolModel.addPlugin(httpPlugin);
+            toolModel.addPlugin(googleSearchPlugin);
             this.modelMap.put(toolModel.getName(), toolModel);
 
             PluginModel cmdPluginModel = new CmdPluginModel(chatGPT35Service);

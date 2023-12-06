@@ -8,7 +8,8 @@ import java.util.List;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 @JsonIgnoreProperties("think")
-public record Message(String role, String content, List<GPTResp.ToolCall> tool_calls, String tool_call_id, String name, Boolean think) {
+public record Message(String role, String content, List<GPTResp.ToolCall> tool_calls, String tool_call_id, String name,
+                      Boolean think) {
 
     public static Message system(String content, boolean isThink) {
         return new Message("system", content, null, null, null, isThink);

@@ -1,35 +1,33 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var inputTextArea = document.getElementById('inputTextArea');
     var chatBox = document.getElementById('chatBox');
-    var sendBtn = document.getElementById('sendBtn');
+
     var clearBtn = document.getElementById('clearBtn');
-    var modelDropdown = document.getElementById('modelDropdown');
+    var settingBtn = document.getElementById('settingBtn');
+    var settingBox = document.getElementById('settingBox');
+    var closeBtn = document.getElementById('closeBtn');
+
+    var inputTextArea = document.getElementById('inputTextArea');
+    var sendBtn = document.getElementById('sendBtn');
 
     window.addEventListener("beforeunload", clearMessages);
+
     clearBtn.addEventListener('click', clearMessages);
-    sendBtn.addEventListener('click', sendMessage);
-
-    document.getElementById('modelSelectBtn').addEventListener('click', function() {
-        modelDropdown.style.display = 'block';
-    });
-
-//    var options = modelDropdown.getElementsByTagName('option');
-//    for (var i = 0; i < options.length; i++) {
-//        options[i].addEventListener('keyDown', function() {
-//          modelDropdown.style.display = 'none';
-//      });
-//    }
-
-    modelDropdown.addEventListener('change', function() {
-        modelDropdown.style.display = 'none';
-        clearMessages();
-    });
+    settingBtn.addEventListener('click', openSettingModal);
+    closeBtn.addEventListener('click', closeSettingModal);
 
     inputTextArea.addEventListener('keydown', function(event) {
         if (event.key === 'Enter') {
             sendMessage();
         }
     });
+    sendBtn.addEventListener('click', sendMessage);
+
+    function openSettingModal() {
+        settingBox.style.display = 'block';
+    }
+    function closeSettingModal() {
+        settingBox.style.display = 'none';
+    }
 
     async function clearMessages() {
         var response = await fetch('/api', {
@@ -40,7 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.cookie = "cookieName=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
         inputTextArea.disabled = false;
         sendBtn.disabled = false;
-        inputTextArea.focus();
     }
 
     async function sendMessage() {
@@ -64,12 +61,14 @@ document.addEventListener('DOMContentLoaded', function() {
         chatBox.appendChild(respDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
 
+        var model = document.querySelector('input[name="model"]:checked').value;
+
         var response = await fetch('/api', {
             method: 'POST',
             headers: {
                 'Content-Type': 'text/plain'
             },
-            body: JSON.stringify({'model': modelDropdown.value, 'question': question})
+            body: JSON.stringify({'model': model, 'question': question})
         });
 
         if (response.ok) {
@@ -118,6 +117,5 @@ document.addEventListener('DOMContentLoaded', function() {
         chatBox.scrollTop = chatBox.scrollHeight;
         inputTextArea.disabled = false;
         sendBtn.disabled = false;
-        inputTextArea.focus();
     }
 });

@@ -1,14 +1,18 @@
 package lk.eternal.ai.model;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import lk.eternal.ai.dto.req.Message;
+import lk.eternal.ai.dto.req.Tool;
+import lk.eternal.ai.plugin.Plugin;
 import lk.eternal.ai.service.GPTService;
+import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedList;
-import java.util.Optional;
-import java.util.function.Predicate;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class CmdPluginModel extends PluginModel {
 
@@ -16,7 +20,11 @@ public class CmdPluginModel extends PluginModel {
 
     private static final Pattern API_CHECK_PATTERN = Pattern.compile("\\[(\\w+)](.+?)\\[\\1]");
 
-    private static final String PROMPT = """
+    private static final String PROMPT_FORMAT = """
+            你现在是LK公司的强大且无所不知的一个具有执行工具能力的高级AI助手,你需要尽可能的去回答问题
+            你可以使用以下的工具:[(工具名和描述}]
+            ${plugins}
+                        
             你需要按照下列流程来回答问题
             用户发起请求：
                 用户向AI发送消息，描述他们的需求或提出问题。
@@ -41,13 +49,11 @@ public class CmdPluginModel extends PluginModel {
             Assistant: 1 + 1 = 2
             """;
 
+    private String prompt;
+
 
     public CmdPluginModel(GPTService gptService) {
         super(gptService);
-    }
-
-    protected String getPrompt() {
-        return PROMPT;
     }
 
     @Override
@@ -56,25 +62,38 @@ public class CmdPluginModel extends PluginModel {
     }
 
     @Override
-    public String question(LinkedList<Message> messages) {
-        LOGGER.info("User: {}", messages.getLast().content());
-        var answer = request(messages, null);
-        while (true) {
-            LOGGER.info("AI: {}", answer);
-            final var matcher = API_CHECK_PATTERN.matcher(answer);
-            if (matcher.find()) {
-                final var cmd = matcher.group(1);
-                final var param = matcher.group(2);
-                final var content = Optional.ofNullable(executePlugin(cmd, param)).filter(Predicate.not(String::isBlank)).orElse("无数据");
-                messages.addLast(Message.assistant(answer, true));
-                messages.addLast(Message.system(content, true));
-                answer = request(messages);
-            } else {
-                break;
-            }
+    public void addPlugin(Plugin plugin) {
+        super.addPlugin(plugin);
+        this.prompt = PROMPT_FORMAT.replace("${plugins}", this.pluginMap.entrySet().stream().map(e -> e.getKey() + ":" + e.getValue().description())
+                .collect(Collectors.joining("\n")));
+    }
+
+
+    @Override
+    protected String getPrompt() {
+        return this.prompt;
+    }
+
+    @Override
+    protected List<String> getStops() {
+        return null;
+    }
+
+    @Override
+    protected List<Tool> getTools() {
+        return null;
+    }
+
+
+    @Override
+    protected List<PluginCall> getPluginCall(Message message) {
+        final var matcher = API_CHECK_PATTERN.matcher(message.content());
+        if (matcher.find()) {
+            final var name = matcher.group(1).trim();
+            final var param = matcher.group(2).trim();
+            return Collections.singletonList(new PluginCall(null, name, Mapper.readValueNotError(param, new TypeReference<>() {
+            })));
         }
-        messages.removeIf(m -> Boolean.TRUE.equals(m.think()));
-        messages.addLast(Message.assistant(answer, false));
-        return answer;
+        return null;
     }
 }

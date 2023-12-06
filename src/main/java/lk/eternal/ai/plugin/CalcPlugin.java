@@ -24,12 +24,7 @@ public class CalcPlugin implements Plugin {
     }
 
     @Override
-    public String execute(Object arg) {
-        return String.valueOf(Calculator.conversion(arg.toString()));
-    }
-
-    @Override
     public String execute(Map<String, Object> param) {
-        return execute(param.get("expression"));
+        return String.valueOf(Calculator.conversion(param.get("expression").toString()));
     }
 }

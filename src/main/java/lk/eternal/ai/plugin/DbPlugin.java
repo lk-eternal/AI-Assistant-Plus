@@ -40,9 +40,9 @@ public class DbPlugin implements Plugin {
     }
 
     @Override
-    public String execute(Object arg) {
+    public String execute(Map<String, Object> args) {
         try (final var connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
-             final var statement = connection.prepareStatement(arg.toString())) {
+             final var statement = connection.prepareStatement(args.get("sql").toString())) {
             boolean isResultSet = statement.execute();  // 执行 SQL 语句
 
             String resp;
@@ -86,9 +86,5 @@ public class DbPlugin implements Plugin {
         } catch (Exception e) {
             return e.getMessage();
         }
-    }
-
-    public String execute(Map<String, Object> args) {
-        return execute(args.get("sql"));
     }
 }
