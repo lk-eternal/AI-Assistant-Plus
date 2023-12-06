@@ -48,16 +48,17 @@ public class Application {
             LOGGER.info("profiles.active: default");
             filePath = "application.properties";
         }
-        final var classLoader = Application.class.getClassLoader();
         final var properties = new Properties();
-        final var resource = classLoader.getResource(filePath);
-        if (resource == null) {
-            LOGGER.warn("Properties file not found: {}", filePath);
-            return;
-        }
         LOGGER.info("Read properties file: {}", filePath);
-        try (final var fileInputStream = new FileInputStream(resource.getFile())) {
-            properties.load(fileInputStream);
+        try (final var inputStream = Optional.ofNullable(Application.class.getClassLoader().getResourceAsStream(filePath))
+                .or(() -> {
+            try {
+                return Optional.of(new FileInputStream(filePath));
+            } catch (FileNotFoundException e) {
+                return Optional.empty();
+            }
+        }).orElseThrow(() -> new IOException("Not found"))) {
+            properties.load(inputStream);
         } catch (IOException e) {
             LOGGER.warn("Properties file can not read: {}", e.getMessage());
         }
@@ -199,16 +200,11 @@ public class Application {
                 requestPath = "/index.html";
             }
 
-            final var classLoader = getClass().getClassLoader();
-            final var file = Optional.ofNullable(classLoader.getResource(folder + requestPath))
-                    .map(URL::getFile)
-                    .map(File::new)
-                    .orElse(null);
-
+            final var inputStream = getClass().getClassLoader().getResourceAsStream(folder + requestPath);
             exchange.getResponseHeaders().set("Content-Type", ContentTypeUtil.type(requestPath));
 
-            if (file != null && file.exists() && file.isFile()) {
-                byte[] fileBytes = readFileBytes(file);
+            if (inputStream != null) {
+                byte[] fileBytes = readFileBytes(inputStream);
                 exchange.sendResponseHeaders(200, fileBytes.length);
                 OutputStream outputStream = exchange.getResponseBody();
                 outputStream.write(fileBytes);
@@ -222,8 +218,8 @@ public class Application {
             }
         }
 
-        private byte[] readFileBytes(File file) throws IOException {
-            try (InputStream inputStream = new FileInputStream(file)) {
+        private byte[] readFileBytes(InputStream inputStream) throws IOException {
+            try (inputStream) {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 byte[] buffer = new byte[4096];
                 int bytesRead;

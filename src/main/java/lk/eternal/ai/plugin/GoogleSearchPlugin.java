@@ -4,10 +4,8 @@ package lk.eternal.ai.plugin;
 import lk.eternal.ai.dto.req.Parameters;
 import lk.eternal.ai.dto.resp.SearchResponse;
 import lk.eternal.ai.util.Mapper;
-import okhttp3.internal.proxy.NullProxySelector;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -18,8 +16,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.Predicate;
 
 public class GoogleSearchPlugin implements Plugin {
 
