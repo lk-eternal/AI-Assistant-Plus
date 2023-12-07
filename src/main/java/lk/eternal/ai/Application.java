@@ -72,7 +72,7 @@ public class Application {
     private static void initProxy() {
         final var proxyUrl = System.getProperty("proxy.url");
         final var proxyPort = System.getProperty("proxy.port");
-        if (proxyUrl != null && proxyPort != null) {
+        if (proxyUrl != null && !proxyUrl.isBlank() && proxyPort != null && !proxyPort.isBlank()) {
             ProxySelector.setDefault(ProxySelector.of(new InetSocketAddress(proxyUrl, Integer.parseInt(proxyPort))));
         }
     }
