@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -21,9 +20,9 @@ import java.util.List;
 import java.util.Optional;
 
 
-public class ChatGPTService implements GPTService {
+public abstract class ChatGPTAiModel implements AiModel {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ChatGPT4Service.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChatGPT4AiModel.class);
 
     private static final HttpClient HTTP_CLIENT;
 
@@ -41,7 +40,7 @@ public class ChatGPTService implements GPTService {
     private final String openaiApiUrl;
     private final String model;
 
-    public ChatGPTService(String openaiApiKey, String openaiApiUrl, String model) {
+    public ChatGPTAiModel(String openaiApiKey, String openaiApiUrl, String model) {
         this.openaiApiKey = openaiApiKey;
         this.openaiApiUrl = openaiApiUrl;
         this.model = model;

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.dto.req.Tool;
 import lk.eternal.ai.plugin.Plugin;
-import lk.eternal.ai.service.GPTService;
 import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,9 +13,9 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class CmdPluginModel extends PluginModel {
+public class CmdToolModel extends BaseToolModel {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CmdPluginModel.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CmdToolModel.class);
 
     private static final Pattern API_CHECK_PATTERN = Pattern.compile("\\[(\\w+)](.+?)\\[\\1]");
 
@@ -52,8 +51,7 @@ public class CmdPluginModel extends PluginModel {
     private String prompt;
 
 
-    public CmdPluginModel(GPTService gptService) {
-        super(gptService);
+    public CmdToolModel() {
     }
 
     @Override

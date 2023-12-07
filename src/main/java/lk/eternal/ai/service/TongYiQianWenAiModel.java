@@ -6,7 +6,6 @@ import com.alibaba.dashscope.aigc.generation.models.QwenParam;
 import com.alibaba.dashscope.common.Message;
 import com.alibaba.dashscope.common.MessageManager;
 import com.alibaba.dashscope.utils.Constants;
-import com.alibaba.dashscope.utils.JsonUtils;
 import lk.eternal.ai.dto.req.Tool;
 import lk.eternal.ai.dto.resp.GPTResp;
 import lk.eternal.ai.exception.GPTException;
@@ -14,13 +13,18 @@ import lk.eternal.ai.exception.GPTException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class TongYiQianWenService implements GPTService {
+public class TongYiQianWenAiModel implements AiModel {
 
     private final Generation gen;
 
-    public TongYiQianWenService(String tyqwApiKey) {
+    public TongYiQianWenAiModel(String tyqwApiKey) {
         Constants.apiKey = tyqwApiKey;
         gen = new Generation();
+    }
+
+    @Override
+    public String getName() {
+        return "tyqw";
     }
 
     @Override

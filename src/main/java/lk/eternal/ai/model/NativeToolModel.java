@@ -6,7 +6,6 @@ import lk.eternal.ai.dto.req.Function;
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.dto.req.Tool;
 import lk.eternal.ai.plugin.Plugin;
-import lk.eternal.ai.service.GPTService;
 import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,20 +15,19 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class ToolPluginModel extends PluginModel {
+public class NativeToolModel extends BaseToolModel {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ToolPluginModel.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NativeToolModel.class);
 
     private final List<Tool> tools;
 
-    public ToolPluginModel(GPTService gptService) {
-        super(gptService);
+    public NativeToolModel() {
         this.tools = new ArrayList<>();
     }
 
     @Override
     public String getName() {
-        return "tool";
+        return "native";
     }
 
     @Override

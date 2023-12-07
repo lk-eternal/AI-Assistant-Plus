@@ -1,5 +1,6 @@
 package lk.eternal.ai;
 
+import cn.hutool.http.HttpStatus;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -8,9 +9,10 @@ import lk.eternal.ai.dto.req.AppReq;
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.model.*;
 import lk.eternal.ai.plugin.*;
-import lk.eternal.ai.service.ChatGPT3_5Service;
-import lk.eternal.ai.service.ChatGPT4Service;
-import lk.eternal.ai.service.TongYiQianWenService;
+import lk.eternal.ai.service.ChatGPT3_5AiModel;
+import lk.eternal.ai.service.ChatGPT4AiModel;
+import lk.eternal.ai.service.AiModel;
+import lk.eternal.ai.service.TongYiQianWenAiModel;
 import lk.eternal.ai.util.ContentTypeUtil;
 import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
@@ -20,7 +22,6 @@ import java.io.*;
 import java.net.HttpCookie;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Executors;
 
@@ -78,49 +79,51 @@ public class Application {
 
     static class ApiHandler implements HttpHandler {
 
-        public record User(String id, LinkedList<Message> messages, Model model){}
+        public record User(String id, LinkedList<Message> messages){}
 
         private final Map<String, User> userMap = new HashMap<>();
-        private final Map<String, Model> modelMap = new HashMap<>();
+        private final Map<String, ToolModel> toolModelMap = new HashMap<>();
+        private final Map<String, AiModel> aiModelMap = new HashMap<>();
 
         public ApiHandler() {
             final var openaiApiUrl = System.getProperty("openai.url");
             final var openaiApiKey = System.getProperty("openai.key");
-
             final var tyqwApiKey = System.getProperty("tyqw.key");
-
-            final var chatGPT35Service = new ChatGPT3_5Service(openaiApiKey, openaiApiUrl);
-            final var chatGPT4Service = new ChatGPT4Service(openaiApiKey, openaiApiUrl);
-            final var tyqwService = new TongYiQianWenService(tyqwApiKey);
+            final var chatGPT35Service = new ChatGPT3_5AiModel(openaiApiKey, openaiApiUrl);
+            final var chatGPT4Service = new ChatGPT4AiModel(openaiApiKey, openaiApiUrl);
+            final var tyqwService = new TongYiQianWenAiModel(tyqwApiKey);
+            this.aiModelMap.put(chatGPT35Service.getName(), chatGPT35Service);
+            this.aiModelMap.put(chatGPT4Service.getName(), chatGPT4Service);
+            this.aiModelMap.put(tyqwService.getName(), tyqwService);
 
             final var calcPlugin = new CalcPlugin();
             final var dbPlugin = new DbPlugin();
             final var httpPlugin = new HttpPlugin();
             final var googleSearchPlugin = new GoogleSearchPlugin(System.getProperty("google.key"), System.getProperty("google.search.cx"));
 
-            PluginModel toolModel = new ToolPluginModel(chatGPT35Service);
+            BaseToolModel toolModel = new NativeToolModel();
             toolModel.addPlugin(calcPlugin);
             toolModel.addPlugin(dbPlugin);
             toolModel.addPlugin(httpPlugin);
             toolModel.addPlugin(googleSearchPlugin);
-            this.modelMap.put(toolModel.getName(), toolModel);
+            this.toolModelMap.put(toolModel.getName(), toolModel);
 
-            PluginModel cmdPluginModel = new CmdPluginModel(tyqwService);
+            BaseToolModel cmdPluginModel = new CmdToolModel();
             cmdPluginModel.addPlugin(calcPlugin);
             cmdPluginModel.addPlugin(dbPlugin);
             cmdPluginModel.addPlugin(httpPlugin);
             cmdPluginModel.addPlugin(googleSearchPlugin);
-            this.modelMap.put(cmdPluginModel.getName(), cmdPluginModel);
+            this.toolModelMap.put(cmdPluginModel.getName(), cmdPluginModel);
 
-            PluginModel formatPluginModel = new FormatPluginModel(tyqwService);
+            BaseToolModel formatPluginModel = new FormatToolModel();
             formatPluginModel.addPlugin(calcPlugin);
             formatPluginModel.addPlugin(dbPlugin);
             formatPluginModel.addPlugin(httpPlugin);
             formatPluginModel.addPlugin(googleSearchPlugin);
-            this.modelMap.put(formatPluginModel.getName(), formatPluginModel);
+            this.toolModelMap.put(formatPluginModel.getName(), formatPluginModel);
 
-            NoneModel noneModel = new NoneModel(chatGPT35Service);
-            this.modelMap.put(noneModel.getName(), noneModel);
+            NoneToolModel noneModel = new NoneToolModel();
+            this.toolModelMap.put(noneModel.getName(), noneModel);
         }
 
         @Override
@@ -136,36 +139,55 @@ public class Application {
                 final var req = new String(t.getRequestBody().readAllBytes());
 
                 final var appReq = Mapper.readValueNotError(req, AppReq.class);
+                if(appReq == null){
+                    response(t, "无效请求", HttpStatus.HTTP_BAD_REQUEST);
+                    return;
+                }
 
                 if (!hasSessionId) {
                     sessionId = UUID.randomUUID().toString();
                     this.setSessionIdInCookie(t.getResponseHeaders(), sessionId);
                 }
                 String finalSessionId = sessionId;
-                final var user = this.userMap.computeIfAbsent(sessionId, k -> new User(finalSessionId, new LinkedList<>(), this.modelMap.get(Optional.ofNullable(appReq.model())
-                        .filter(this.modelMap::containsKey)
-                        .orElse("none"))));
+                final var user = this.userMap.computeIfAbsent(sessionId, k -> new User(finalSessionId, new LinkedList<>()));
+
+                final var aiModelName = Optional.ofNullable(appReq.aiModel())
+                        .filter(this.aiModelMap::containsKey)
+                        .orElse("tyqw");
+                final var toolModelName = Optional.ofNullable(appReq.toolModel())
+                        .filter(this.toolModelMap::containsKey)
+                        .orElse("none");
+                if(aiModelName.equals("gpt4") && !"lk123".equals(appReq.gpt4Code())){
+                    response(t, "邀请码不正确", HttpStatus.HTTP_UNAUTHORIZED);
+                    return;
+                }
+                if(aiModelName.equals("tyqw") && toolModelName.equals("native")){
+                    response(t, "通义千问不支持官方原生工具", HttpStatus.HTTP_BAD_REQUEST);
+                    return;
+                }
+
                 user.messages().addLast(Message.user(req));
-                final var answer = user.model.question(user.messages());
+                final var answer = this.toolModelMap.get(toolModelName).question(this.aiModelMap.get(aiModelName), user.messages());
 
                 t.sendResponseHeaders(200, answer.getBytes().length);
                 OutputStream os = t.getResponseBody();
                 os.write(answer.getBytes());
-                os.flush();
                 os.close();
-            }
-            if (t.getRequestMethod().equalsIgnoreCase("delete")) {
+            }else if (t.getRequestMethod().equalsIgnoreCase("delete")) {
                 if (hasSessionId) {
                     this.userMap.remove(sessionId);
                 }
-                t.sendResponseHeaders(200, 0);
-                OutputStream os = t.getResponseBody();
-                os.close();
+                response(t, "", HttpStatus.HTTP_OK);
             } else {
-                t.sendResponseHeaders(200, 0);
-                OutputStream os = t.getResponseBody();
-                os.close();
+                response(t, "", HttpStatus.HTTP_OK);
             }
+        }
+
+        private static void response(HttpExchange t, String message, int rCode) throws IOException {
+            t.sendResponseHeaders(rCode, message.getBytes().length);
+            OutputStream os = t.getResponseBody();
+            os.write(message.getBytes());
+            os.close();
         }
 
         private String getSessionIdFromCookie(Headers requestHeaders) {

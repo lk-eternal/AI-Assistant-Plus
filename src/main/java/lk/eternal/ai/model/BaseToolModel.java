@@ -6,7 +6,7 @@ import lk.eternal.ai.dto.req.Tool;
 import lk.eternal.ai.dto.resp.GPTResp;
 import lk.eternal.ai.exception.GPTException;
 import lk.eternal.ai.plugin.Plugin;
-import lk.eternal.ai.service.GPTService;
+import lk.eternal.ai.service.AiModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,19 +15,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public abstract class PluginModel implements Model {
+public abstract class BaseToolModel implements ToolModel {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PluginModel.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BaseToolModel.class);
 
     private static final int MAX_HISTORY = 10;
 
-    protected final GPTService gptService;
 
     protected final Map<String, Plugin> pluginMap;
 
-    public PluginModel(GPTService gptService) {
+    public BaseToolModel() {
         this.pluginMap = new HashMap<>();
-        this.gptService = gptService;
     }
 
     public void addPlugin(Plugin plugin) {
@@ -35,11 +33,11 @@ public abstract class PluginModel implements Model {
     }
 
     @Override
-    public String question(LinkedList<Message> messages) {
+    public String question(AiModel aiModel, LinkedList<Message> messages) {
         LOGGER.info("User: {}", messages.getLast().content());
         String resp;
         try {
-            GPTResp answer = request(messages, getStops(), getTools());
+            GPTResp answer = request(aiModel, messages, getStops(), getTools());
             while (true) {
                 final var aiMessage = answer.getMessage();
                 final var pluginCalls = getPluginCall(aiMessage);
@@ -57,7 +55,7 @@ public abstract class PluginModel implements Model {
                     final var s = executePlugin(name, args);
                     messages.add(Message.tool(id, name, s));
                 }
-                answer = request(messages, getStops(), getTools());
+                answer = request(aiModel, messages, getStops(), getTools());
             }
         } catch (Exception e) {
             messages.removeLast();
@@ -69,7 +67,7 @@ public abstract class PluginModel implements Model {
         return resp;
     }
 
-    protected GPTResp request(LinkedList<Message> messages, List<String> stops, List<Tool> tools) throws GPTException {
+    protected GPTResp request(AiModel aiModel, LinkedList<Message> messages, List<String> stops, List<Tool> tools) throws GPTException {
         final var prompt = getPrompt();
         while (messages.size() > MAX_HISTORY) {
             messages.removeFirst();
@@ -78,7 +76,7 @@ public abstract class PluginModel implements Model {
         if (prompt != null) {
             requestMessages.addFirst(Message.system(prompt, false));
         }
-        return this.gptService.request(requestMessages, stops, tools);
+        return aiModel.request(requestMessages, stops, tools);
     }
 
     protected abstract String getPrompt();

@@ -3,13 +3,16 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <title>AI Assistant Plus</title>
-    <link rel="icon" href="lk_ico.png" type="image/png">
-    <link rel="stylesheet" type="text/css" href="index.css">
-    <script type="text/javascript" src="index.js"></script>
-    <link rel="stylesheet" href="github-dark.min.css">
-    <script src="highlight.min.js"></script>
+
+    <link rel="icon" href="image/lk_ico.png">
+    <link rel="stylesheet" href="style/index.css">
+    <link rel="stylesheet" href="style/github-dark.min.css">
+
+    <script src="script/highlight.min.js"></script>
+    <script src="script/marked.min.js"></script>
+    <script src="script/index.js"></script>
 </head>
 
 <body>
@@ -77,25 +80,25 @@
             <div>
                 <h2>工具模型</h2>
                 <div>
-                    <input type="radio" name="model" value="none" checked>
+                    <input type="radio" name="tool-model" value="none" checked>
                     <label>原生</label><br>
                     <p>无工具调用能力,享受丝滑原生AI</p>
                 </div>
 
                 <div>
-                    <input type="radio" name="model" value="cmd">
+                    <input type="radio" name="tool-model" value="cmd">
                     <label>工具扩展(命令模式)</label><br>
                     <p>有工具调用能力,通过[工具]参数[工具]调用工具</p>
                 </div>
 
                 <div>
-                    <input type="radio" name="model" value="format">
+                    <input type="radio" name="tool-model" value="format">
                     <label>工具扩展(格式模式)</label><br>
                     <p>有工具调用能力,通过[思考,动作,输入]调用工具</p>
                 </div>
 
                 <div>
-                    <input type="radio" name="model" value="tool">
+                    <input type="radio" name="tool-model" value="native">
                     <label>工具扩展(官方)</label><br>
                     <p>有工具调用能力,通过官方原生API实现调用工具</p>
                 </div>
@@ -116,9 +119,10 @@
                 </div>
 
                 <div>
-                    <input type="radio" name="ai-model" value="gpt4" disabled>
+                    <input type="radio" name="ai-model" value="gpt4">
                     <label>GPT 4</label><br>
-                    <p>ChatGPT4,AGI时代的到来,没钱暂不支持</p>
+                    <p>ChatGPT4,AGI时代的到来</p>
+                    <p>请输入邀请码:<input id="gpt4Code"></p>
                 </div>
             </div>
         </div>

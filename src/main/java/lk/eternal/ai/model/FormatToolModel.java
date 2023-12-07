@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.dto.req.Tool;
 import lk.eternal.ai.plugin.Plugin;
-import lk.eternal.ai.service.GPTService;
 import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +14,9 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class FormatPluginModel extends PluginModel {
+public class FormatToolModel extends BaseToolModel {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FormatPluginModel.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FormatToolModel.class);
 
     private static final Pattern API_CHECK_PATTERN = Pattern.compile("动作[：:](.*?)\\n*输入[：:](.*)");
 
@@ -48,8 +47,7 @@ public class FormatPluginModel extends PluginModel {
     private String prompt;
 
 
-    public FormatPluginModel(GPTService gptService) {
-        super(gptService);
+    public FormatToolModel() {
     }
 
     @Override

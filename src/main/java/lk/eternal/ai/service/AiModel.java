@@ -8,7 +8,9 @@ import lk.eternal.ai.exception.GPTException;
 
 import java.util.List;
 
-public interface GPTService {
+public interface AiModel {
+
+    String getName();
 
     default GPTResp request(List<Message> messages) throws GPTException {
         return request(messages, null, null);
