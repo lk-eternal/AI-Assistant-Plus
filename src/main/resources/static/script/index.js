@@ -23,6 +23,42 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     sendBtn.addEventListener('click', sendMessage);
 
+    var aiModels = document.querySelectorAll('input[name="ai-model"]');
+    aiModels.forEach(aiModel => {
+      aiModel.addEventListener('change', function() {
+        var aiModel = document.querySelector('input[name="ai-model"]:checked').value;
+        if(aiModel === 'tyqw'){
+            var nativeModel = document.querySelector('input[name="tool-model"][value="native"]');
+            var c = nativeModel.checked;
+            if(c){
+                document.querySelector('input[name="tool-model"][value="none"]').checked = true;
+            }
+            nativeModel.disabled = true;
+        }else{
+            var nativeModel = document.querySelector('input[name="tool-model"][value="native"]');
+            nativeModel.disabled = false;
+        }
+      });
+    });
+
+    var toolModels = document.querySelectorAll('input[name="tool-model"]');
+    toolModels.forEach(toolModel => {
+      toolModel.addEventListener('change', function() {
+        var toolModel = document.querySelector('input[name="tool-model"]:checked').value;
+        if(toolModel === 'native'){
+            var tyqwModel = document.querySelector('input[name="ai-model"][value="tyqw"]');
+            var c = tyqwModel.checked;
+            if(c){
+                document.querySelector('input[name="ai-model"][value="gpt3.5"]').checked = true;
+            }
+            tyqwModel.disabled = true;
+        }else{
+            var tyqwModel = document.querySelector('input[name="ai-model"][value="tyqw"]');
+            tyqwModel.disabled = false;
+        }
+      });
+    });
+
     function openSettingModal() {
         settingBox.style.display = 'flex';
     }
@@ -62,14 +98,16 @@ document.addEventListener('DOMContentLoaded', function() {
         chatBox.appendChild(respDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        var model = document.querySelector('input[name="model"]:checked').value;
+        var toolModel = document.querySelector('input[name="tool-model"]:checked').value;
+        var aiModel = document.querySelector('input[name="ai-model"]:checked').value;
+        var gpt4Code = document.getElementById('gpt4Code').value;
 
         var response = await fetch('/api', {
             method: 'POST',
             headers: {
                 'Content-Type': 'text/plain'
             },
-            body: JSON.stringify({'model': model, 'question': question})
+            body: JSON.stringify({'aiModel': aiModel, 'toolModel': toolModel, 'question': question, 'gpt4Code': gpt4Code})
         });
 
         if (response.ok) {
