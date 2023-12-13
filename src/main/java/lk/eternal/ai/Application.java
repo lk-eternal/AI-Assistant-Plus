@@ -8,10 +8,13 @@ import com.sun.net.httpserver.HttpServer;
 import lk.eternal.ai.dto.req.AppReq;
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.model.*;
-import lk.eternal.ai.plugin.*;
+import lk.eternal.ai.plugin.CalcPlugin;
+import lk.eternal.ai.plugin.DbPlugin;
+import lk.eternal.ai.plugin.GoogleSearchPlugin;
+import lk.eternal.ai.plugin.HttpPlugin;
+import lk.eternal.ai.service.AiModel;
 import lk.eternal.ai.service.ChatGPT3_5AiModel;
 import lk.eternal.ai.service.ChatGPT4AiModel;
-import lk.eternal.ai.service.AiModel;
 import lk.eternal.ai.service.TongYiQianWenAiModel;
 import lk.eternal.ai.util.ContentTypeUtil;
 import lk.eternal.ai.util.Mapper;
@@ -28,8 +31,8 @@ import java.util.concurrent.Executors;
 public class Application {
     private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
-        initProperties();
+    public static void main(String[] args) throws IOException {
+        initProperties(args);
         initProxy();
 
         HttpServer server = HttpServer.create(new InetSocketAddress(80), 0);
@@ -39,33 +42,71 @@ public class Application {
         server.start();
     }
 
-    private static void initProperties() {
-        final var active = System.getenv("profiles.active");
-        String filePath;
+    private static void initProperties(String[] args) {
+        //项目内默认配置文件
+        try (final var inputStream = Application.class.getClassLoader().getResourceAsStream("application.properties")) {
+            final var properties = new Properties();
+            properties.load(inputStream);
+            for (String key : properties.stringPropertyNames()) {
+                String value = properties.getProperty(key);
+                System.setProperty(key, value);
+            }
+        } catch (IOException e) {
+            LOGGER.warn("Read inner application.properties error:{}", e.getMessage());
+        }
+
+        //项目外默认配置文件
+        try (final var inputStream = new FileInputStream("application.properties")) {
+            final var properties = new Properties();
+            properties.load(inputStream);
+            for (String key : properties.stringPropertyNames()) {
+                String value = properties.getProperty(key);
+                System.setProperty(key, value);
+            }
+        } catch (IOException e) {
+            LOGGER.warn("Read outer application.properties error:{}", e.getMessage());
+        }
+
+        final var active = Arrays.stream(args)
+                .filter(a -> a.startsWith("profiles.active="))
+                .findFirst()
+                .map(a -> a.split("=")[1])
+                .orElseGet(() -> System.getenv("profiles.active"));
         if (active != null && !active.isBlank()) {
             LOGGER.info("profiles.active: {}", active);
-            filePath = "application-" + active + ".properties";
-        } else {
-            LOGGER.info("profiles.active: default");
-            filePath = "application.properties";
-        }
-        final var properties = new Properties();
-        LOGGER.info("Read properties file: {}", filePath);
-        try (final var inputStream = Optional.ofNullable(Application.class.getClassLoader().getResourceAsStream(filePath))
-                .or(() -> {
-            try {
-                return Optional.of(new FileInputStream(filePath));
-            } catch (FileNotFoundException e) {
-                return Optional.empty();
+            final var filePath = "application-" + active + ".properties";
+            LOGGER.info("Read properties file: {}", filePath);
+            //项目内指定配置文件
+            try (final var inputStream = Application.class.getClassLoader().getResourceAsStream(filePath)) {
+                final var properties = new Properties();
+                properties.load(inputStream);
+                for (String key : properties.stringPropertyNames()) {
+                    String value = properties.getProperty(key);
+                    System.setProperty(key, value);
+                }
+            } catch (IOException e) {
+                LOGGER.warn("Read inner {} error:{}", filePath, e.getMessage());
             }
-        }).orElseThrow(() -> new IOException("Not found"))) {
-            properties.load(inputStream);
-        } catch (IOException e) {
-            LOGGER.warn("Properties file can not read: {}", e.getMessage());
+
+            //项目外指定配置文件
+            try (final var inputStream = new FileInputStream(filePath)) {
+                final var properties = new Properties();
+                properties.load(inputStream);
+                for (String key : properties.stringPropertyNames()) {
+                    String value = properties.getProperty(key);
+                    System.setProperty(key, value);
+                }
+            } catch (IOException e) {
+                LOGGER.warn("Read outer {} error:{}", filePath, e.getMessage());
+            }
         }
-        for (String key : properties.stringPropertyNames()) {
-            String value = properties.getProperty(key);
-            System.setProperty(key, value);
+
+        //启动参数
+        for (String arg : args) {
+            final var split = arg.split("=");
+            if (split.length == 2) {
+                System.setProperty(split[0], split[1]);
+            }
         }
     }
 
@@ -79,7 +120,8 @@ public class Application {
 
     static class ApiHandler implements HttpHandler {
 
-        public record User(String id, LinkedList<Message> messages){}
+        public record User(String id, LinkedList<Message> messages) {
+        }
 
         private final Map<String, User> userMap = new HashMap<>();
         private final Map<String, ToolModel> toolModelMap = new HashMap<>();
@@ -139,7 +181,7 @@ public class Application {
                 final var req = new String(t.getRequestBody().readAllBytes());
 
                 final var appReq = Mapper.readValueNotError(req, AppReq.class);
-                if(appReq == null){
+                if (appReq == null) {
                     response(t, "无效请求", HttpStatus.HTTP_BAD_REQUEST);
                     return;
                 }
@@ -157,11 +199,11 @@ public class Application {
                 final var toolModelName = Optional.ofNullable(appReq.toolModel())
                         .filter(this.toolModelMap::containsKey)
                         .orElse("none");
-                if(aiModelName.equals("gpt4") && !"lk123".equals(appReq.gpt4Code())){
+                if (aiModelName.equals("gpt4") && !"lk123".equals(appReq.gpt4Code())) {
                     response(t, "邀请码不正确", HttpStatus.HTTP_UNAUTHORIZED);
                     return;
                 }
-                if(aiModelName.equals("tyqw") && toolModelName.equals("native")){
+                if (aiModelName.equals("tyqw") && toolModelName.equals("native")) {
                     response(t, "通义千问不支持官方原生工具", HttpStatus.HTTP_BAD_REQUEST);
                     return;
                 }
@@ -173,7 +215,7 @@ public class Application {
                 OutputStream os = t.getResponseBody();
                 os.write(answer.getBytes());
                 os.close();
-            }else if (t.getRequestMethod().equalsIgnoreCase("delete")) {
+            } else if (t.getRequestMethod().equalsIgnoreCase("delete")) {
                 if (hasSessionId) {
                     this.userMap.remove(sessionId);
                 }
