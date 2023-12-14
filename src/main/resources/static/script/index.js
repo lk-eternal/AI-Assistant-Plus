@@ -110,54 +110,67 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify({'aiModel': aiModel, 'toolModel': toolModel, 'question': question, 'gpt4Code': gpt4Code})
         });
 
+        respDiv.classList.remove('loading');
         if (response.ok) {
-            var data = await response.text();
-            respDiv.innerHTML = marked.parse(data);
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
 
-            respDiv.querySelectorAll('pre code').forEach((el) => {
-                hljs.highlightElement(el);
-            });
+            let data = '';
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    break;
+                }
+                data += decoder.decode(value);
+                console.log(data)
 
-            // 获取 p 元素中的所有 pre 元素
-            var preElements = respDiv.getElementsByTagName('pre');
+                respDiv.innerHTML = marked.parse(data);
 
-            // 为每个 pre 元素添加点击事件
-            for (var i = 0; i < preElements.length; i++) {
-                var copyButton = document.createElement('button');
-                copyButton.textContent = '复制';
-                copyButton.className = 'copy-button';
-                preElements[i].appendChild(copyButton);
-
-                copyButton.addEventListener('click', function(event) {
-                    var textarea = document.createElement('textarea');
-                    textarea.value = event.target.parentNode.textContent.replace('复制', '');
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textarea);
-
-                    var alert = document.createElement('div');
-                    alert.textContent = '复制成功！';
-                    alert.style.position = 'fixed';
-                    alert.style.bottom = '50%';
-                    alert.style.left = '50%';
-                    alert.style.transform = 'translate(-50%, 50%)';
-                    alert.style.backgroundColor = '#20B2AA';
-                    alert.style.color = 'white';
-                    alert.style.padding = '10px';
-                    alert.style.borderRadius = '5px';
-                    document.body.appendChild(alert);
-                    setTimeout(function() {
-                        document.body.removeChild(alert);
-                    }, 2000);
+                respDiv.querySelectorAll('pre code').forEach((el) => {
+                    hljs.highlightElement(el);
                 });
+
+                // 获取 p 元素中的所有 pre 元素
+                var preElements = respDiv.getElementsByTagName('pre');
+
+                // 为每个 pre 元素添加点击事件
+                for (var i = 0; i < preElements.length; i++) {
+                    var copyButton = document.createElement('button');
+                    copyButton.textContent = '复制';
+                    copyButton.className = 'copy-button';
+                    preElements[i].appendChild(copyButton);
+
+                    copyButton.addEventListener('click', function(event) {
+                        var textarea = document.createElement('textarea');
+                        textarea.value = event.target.parentNode.textContent.replace('复制', '');
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textarea);
+
+                        var alert = document.createElement('div');
+                        alert.textContent = '复制成功！';
+                        alert.style.position = 'fixed';
+                        alert.style.bottom = '50%';
+                        alert.style.left = '50%';
+                        alert.style.transform = 'translate(-50%, 50%)';
+                        alert.style.backgroundColor = '#20B2AA';
+                        alert.style.color = 'white';
+                        alert.style.padding = '10px';
+                        alert.style.borderRadius = '5px';
+                        document.body.appendChild(alert);
+                        setTimeout(function() {
+                            document.body.removeChild(alert);
+                        }, 2000);
+                    });
+                }
+                chatBox.scrollTop = chatBox.scrollHeight;
             }
-        } else {
+        }else{
             console.error('Error:', response.status, response.statusText);
             respDiv.innerHTML = '<div>' + response.status + ':' + response.statusText + '</div>';
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
-        respDiv.classList.remove('loading');
-        chatBox.scrollTop = chatBox.scrollHeight;
         inputTextArea.disabled = false;
         sendBtn.disabled = false;
     }

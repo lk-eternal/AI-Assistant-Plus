@@ -9,7 +9,10 @@ import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.ProxySelector;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -18,11 +21,12 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 
-public abstract class ChatGPTAiModel implements AiModel {
+public class ChatGPTAiModel implements AiModel {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ChatGPT4AiModel.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChatGPTAiModel.class);
 
     private static final HttpClient HTTP_CLIENT;
 
@@ -38,17 +42,25 @@ public abstract class ChatGPTAiModel implements AiModel {
 
     private final String openaiApiKey;
     private final String openaiApiUrl;
+    private final String name;
     private final String model;
 
-    public ChatGPTAiModel(String openaiApiKey, String openaiApiUrl, String model) {
+    public ChatGPTAiModel(String openaiApiKey, String openaiApiUrl, String name, String model) {
         this.openaiApiKey = openaiApiKey;
         this.openaiApiUrl = openaiApiUrl;
+        this.name = name;
         this.model = model;
     }
 
     @Override
+    public String getName() {
+        return this.name;
+    }
+
+    @Override
     public GPTResp request(List<Message> messages, List<String> stop, List<Tool> tools) throws GPTException {
-        final var reqStr = Optional.ofNullable(Mapper.writeAsStringNotError(new GPTReq(this.model, messages, stop, tools)))
+        final var gptReq = new GPTReq(this.model, messages, stop, tools, true);
+        final var reqStr = Optional.ofNullable(Mapper.writeAsStringNotError(gptReq))
                 .orElseThrow(() -> new GPTException("req can not be null"));
 
         final HttpRequest request = HttpRequest.newBuilder()
@@ -76,5 +88,45 @@ public abstract class ChatGPTAiModel implements AiModel {
                     .orElseGet(() -> response.statusCode() + ":发生未知错误,请稍后再试!"));
         }
         return gptResp;
+    }
+
+    @Override
+    public void request(List<Message> messages, List<String> stop, List<Tool> tools, Consumer<GPTResp> respConsumer) throws GPTException {
+        final var gptReq = new GPTReq(this.model, messages, stop, tools, true);
+        final var reqStr = Optional.ofNullable(Mapper.writeAsStringNotError(gptReq))
+                .orElseThrow(() -> new GPTException("req can not be null"));
+
+        final HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(this.openaiApiUrl))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + this.openaiApiKey)
+                .POST(HttpRequest.BodyPublishers.ofString(reqStr))
+                .build();
+
+        final HttpResponse<InputStream> response;
+        try {
+            response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
+
+            // 读取返回的流式数据
+            BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if(line.isBlank()){
+                    continue;
+                }
+                final var gptResp = Mapper.readValueNotError(line.substring(line.indexOf("{")), GPTResp.class);
+                if(gptResp == null){
+                    continue;
+                }
+                if(gptResp.choices().get(0).getFinish_reason() != null){
+                    break;
+                }
+                respConsumer.accept(gptResp);
+            }
+
+        } catch (IOException | InterruptedException e) {
+            LOGGER.error("请求OpenAI失败: {}", e.getMessage(), e);
+            throw new GPTException("请求OpenAI失败: " + e.getMessage());
+        }
     }
 }

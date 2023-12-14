@@ -79,7 +79,7 @@ public class FormatToolModel extends BaseToolModel {
 
     @Override
     protected List<PluginCall> getPluginCall(Message message) {
-        final var matcher = API_CHECK_PATTERN.matcher(message.content());
+        final var matcher = API_CHECK_PATTERN.matcher(message.getContent());
         if (matcher.find()) {
             final var name = matcher.group(1).trim();
             final var param = matcher.group(2).trim();

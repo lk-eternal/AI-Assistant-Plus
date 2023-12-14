@@ -7,6 +7,7 @@ import lk.eternal.ai.dto.resp.GPTResp;
 import lk.eternal.ai.exception.GPTException;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public interface AiModel {
 
@@ -23,4 +24,7 @@ public interface AiModel {
 
 
     GPTResp request(List<Message> messages, List<String> stop, List<Tool> tools) throws GPTException;
+
+
+    void request(List<Message> messages, List<String> stop, List<Tool> tools, Consumer<GPTResp> respConsumer) throws GPTException;
 }

@@ -4,6 +4,7 @@ package lk.eternal.ai.plugin;
 import lk.eternal.ai.dto.req.Parameters;
 
 import java.io.IOException;
+import java.net.ProxySelector;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -14,10 +15,17 @@ import java.util.regex.Pattern;
 
 public class HttpPlugin implements Plugin {
 
-    private final static HttpClient HTTP_CLIENT = HttpClient.newBuilder()
-            .version(HttpClient.Version.HTTP_1_1)
-            .connectTimeout(Duration.ofMinutes(1))
-            .build();
+    private final static HttpClient HTTP_CLIENT;
+
+    static {
+        final var builder = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofMinutes(1));
+        if (ProxySelector.getDefault() != null) {
+            builder.proxy(ProxySelector.getDefault());
+        }
+        HTTP_CLIENT = builder.build();
+    }
 
     @Override
     public String name() {

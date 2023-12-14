@@ -12,10 +12,7 @@ import lk.eternal.ai.plugin.CalcPlugin;
 import lk.eternal.ai.plugin.DbPlugin;
 import lk.eternal.ai.plugin.GoogleSearchPlugin;
 import lk.eternal.ai.plugin.HttpPlugin;
-import lk.eternal.ai.service.AiModel;
-import lk.eternal.ai.service.ChatGPT3_5AiModel;
-import lk.eternal.ai.service.ChatGPT4AiModel;
-import lk.eternal.ai.service.TongYiQianWenAiModel;
+import lk.eternal.ai.service.*;
 import lk.eternal.ai.util.ContentTypeUtil;
 import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
@@ -131,8 +128,8 @@ public class Application {
             final var openaiApiUrl = System.getProperty("openai.url");
             final var openaiApiKey = System.getProperty("openai.key");
             final var tyqwApiKey = System.getProperty("tyqw.key");
-            final var chatGPT35Service = new ChatGPT3_5AiModel(openaiApiKey, openaiApiUrl);
-            final var chatGPT4Service = new ChatGPT4AiModel(openaiApiKey, openaiApiUrl);
+            final var chatGPT35Service = new ChatGPTAiModel(openaiApiKey, openaiApiUrl, "gpt3.5", "gpt-3.5-turbo-1106");
+            final var chatGPT4Service = new ChatGPTAiModel(openaiApiKey, openaiApiUrl, "gpt4", "gpt-4-1106-preview");
             final var tyqwService = new TongYiQianWenAiModel(tyqwApiKey);
             this.aiModelMap.put(chatGPT35Service.getName(), chatGPT35Service);
             this.aiModelMap.put(chatGPT4Service.getName(), chatGPT4Service);
@@ -209,11 +206,20 @@ public class Application {
                 }
 
                 user.messages().addLast(Message.user(req));
-                final var answer = this.toolModelMap.get(toolModelName).question(this.aiModelMap.get(aiModelName), user.messages());
 
-                t.sendResponseHeaders(200, answer.getBytes().length);
+                t.getResponseHeaders().set("Content-Type", "text/event-stream");
+                t.getResponseHeaders().set("Cache-Control", "no-cache");
+                t.getResponseHeaders().set("Connection", "keep-alive");
+                t.sendResponseHeaders(200, 0);
                 OutputStream os = t.getResponseBody();
-                os.write(answer.getBytes());
+                this.toolModelMap.get(toolModelName).question(this.aiModelMap.get(aiModelName), user.messages(), resp -> {
+                    try {
+                        os.write(resp.getBytes());
+                        os.flush();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
                 os.close();
             } else if (t.getRequestMethod().equalsIgnoreCase("delete")) {
                 if (hasSessionId) {

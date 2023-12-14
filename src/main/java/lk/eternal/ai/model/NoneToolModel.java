@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
+import java.util.function.Consumer;
 
 public class NoneToolModel implements ToolModel {
 
@@ -23,22 +24,24 @@ public class NoneToolModel implements ToolModel {
     }
 
     @Override
-    public String question(AiModel aiModel, LinkedList<Message> messages) {
-        LOGGER.info("User: {}", messages.getLast().content());
-        var answer = request(aiModel, messages);
-        LOGGER.info("AI: {}", answer);
-        messages.addLast(Message.assistant(answer, false));
-        return answer;
-    }
-
-    protected String request(AiModel aiModel, LinkedList<Message> messages) {
+    public void question(AiModel aiModel, LinkedList<Message> messages, Consumer<String> respConsumer) {
+        LOGGER.info("User: {}", messages.getLast().getContent());
         while (messages.size() > MAX_HISTORY) {
             messages.removeFirst();
         }
+        StringBuilder sb = new StringBuilder();
         try {
-            return aiModel.request(messages).getContent();
+            aiModel.request(messages, null, null, resp -> {
+                final var streamContent = resp.getStreamContent();
+                sb.append(streamContent);
+                respConsumer.accept(streamContent);
+            });
+            LOGGER.info("AI: {}", sb);
+            messages.addLast(Message.assistant(sb.toString(), false));
         } catch (GPTException e) {
-            return e.getMessage();
+            LOGGER.info("AI: {}", e.getMessage());
+            respConsumer.accept(e.getMessage());
+            messages.removeLast();
         }
     }
 

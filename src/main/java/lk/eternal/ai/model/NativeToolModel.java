@@ -53,9 +53,9 @@ public class NativeToolModel extends BaseToolModel {
 
     @Override
     protected List<PluginCall> getPluginCall(Message message) {
-        return Optional.ofNullable(message.tool_calls())
+        return Optional.ofNullable(message.getTool_calls())
                 .map(tcs -> tcs.stream()
-                        .map(tc -> new PluginCall(tc.id(), tc.function().name(), Mapper.readValueNotError(tc.function().arguments(), new TypeReference<>() {
+                        .map(tc -> new PluginCall(tc.getId(), tc.getFunction().getName(), Mapper.readValueNotError(tc.getFunction().getArguments(), new TypeReference<>() {
                         })))
                         .collect(Collectors.toList()))
                 .orElse(null);
