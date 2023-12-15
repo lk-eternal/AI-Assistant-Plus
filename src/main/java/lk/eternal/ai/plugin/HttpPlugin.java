@@ -43,10 +43,16 @@ public class HttpPlugin implements Plugin {
     }
 
     @Override
-    public String execute(Map<String, Object> args) {
+    public String execute(Object args) {
+        String exp;
+        if(args instanceof Map<?,?>){
+            exp = ((Map<String, Object>)args).get("url").toString();
+        }else{
+            exp = args.toString();
+        }
         try {
             final HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(args.get("url").toString()))
+                    .uri(URI.create(exp))
                     .build();
             final var response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             final String body = response.body();

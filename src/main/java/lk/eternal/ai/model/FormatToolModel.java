@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -33,7 +34,7 @@ public class FormatToolModel extends BaseToolModel {
             (然后等待系统给出工具的响应结果)
             (系统响应后可以重复这个“思考/动作/输入/等待响应结果”的过程,或者给出最终结果)
                         
-            最终结果:针对于原始问题,输出最终结果,如果有引用来源需要加上引用地址,地址前后加上空格
+            针对于原始问题,输出最终结果,如果有引用来源需要加上引用地址,地址前后加上空格
                         
             示例:
             用户:今天成都天气怎么样?
@@ -41,7 +42,7 @@ public class FormatToolModel extends BaseToolModel {
             动作: http
             输入: http://www.weather.com.cn/weather/101270101.shtml
             系统:28日（今天） 多云 19/8℃
-            助手:最终结果:今天成都多云,气温是8到19摄氏度. http://www.weather.com.cn/weather/101270101.shtml\s
+            助手:今天成都多云,气温是8到19摄氏度. http://www.weather.com.cn/weather/101270101.shtml\s
             """;
 
     private String prompt;
@@ -83,8 +84,7 @@ public class FormatToolModel extends BaseToolModel {
         if (matcher.find()) {
             final var name = matcher.group(1).trim();
             final var param = matcher.group(2).trim();
-            return Collections.singletonList(new PluginCall(null, name, Mapper.readValueNotError(param, new TypeReference<>() {
-            })));
+            return Collections.singletonList(new PluginCall(null, name, param));
         }
         return null;
     }

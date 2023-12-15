@@ -2,6 +2,7 @@ package lk.eternal.ai.model;
 
 
 import lk.eternal.ai.dto.req.Message;
+import lk.eternal.ai.dto.resp.ChatResp;
 import lk.eternal.ai.service.AiModel;
 
 import java.util.LinkedList;
@@ -11,6 +12,6 @@ public interface ToolModel {
 
     String getName();
 
-    void question(AiModel aiModel, LinkedList<Message> messages, Consumer<String> respConsumer);
+    void question(AiModel aiModel, LinkedList<Message> messages, Consumer<ChatResp> respConsumer);
 
 }

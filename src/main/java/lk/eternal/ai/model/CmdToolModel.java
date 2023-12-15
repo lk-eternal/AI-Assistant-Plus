@@ -89,8 +89,7 @@ public class CmdToolModel extends BaseToolModel {
         if (matcher.find()) {
             final var name = matcher.group(1).trim();
             final var param = matcher.group(2).trim();
-            return Collections.singletonList(new PluginCall(null, name, Mapper.readValueNotError(param, new TypeReference<>() {
-            })));
+            return Collections.singletonList(new PluginCall(null, name, param));
         }
         return null;
     }

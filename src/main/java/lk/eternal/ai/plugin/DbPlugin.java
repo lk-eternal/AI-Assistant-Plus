@@ -40,9 +40,15 @@ public class DbPlugin implements Plugin {
     }
 
     @Override
-    public String execute(Map<String, Object> args) {
+    public String execute(Object args) {
+        String exp;
+        if(args instanceof Map<?,?>){
+            exp = ((Map<String, Object>)args).get("sql").toString();
+        }else{
+            exp = args.toString();
+        }
         try (final var connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
-             final var statement = connection.prepareStatement(args.get("sql").toString())) {
+             final var statement = connection.prepareStatement(exp)) {
             boolean isResultSet = statement.execute();  // 执行 SQL 语句
 
             String resp;

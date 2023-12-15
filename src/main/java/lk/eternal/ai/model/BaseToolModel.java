@@ -3,11 +3,11 @@ package lk.eternal.ai.model;
 
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.dto.req.Tool;
+import lk.eternal.ai.dto.resp.ChatResp;
 import lk.eternal.ai.dto.resp.GPTResp;
 import lk.eternal.ai.exception.GPTException;
 import lk.eternal.ai.plugin.Plugin;
 import lk.eternal.ai.service.AiModel;
-import org.checkerframework.checker.units.qual.C;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,20 +35,20 @@ public abstract class BaseToolModel implements ToolModel {
     }
 
     @Override
-    public void question(AiModel aiModel, LinkedList<Message> messages, Consumer<String> respConsumer) {
+    public void question(AiModel aiModel, LinkedList<Message> messages, Consumer<ChatResp> respConsumer) {
         LOGGER.info("User: {}", messages.getLast().getContent());
         try {
             String resp;
             while (true) {
                 final GPTResp[] respHolder = {null};
                 request(aiModel, messages, getStops(), getTools(), gptResp -> {
-                    if(respHolder[0] == null){
+                    if (respHolder[0] == null) {
                         respHolder[0] = gptResp;
                     }
                     respHolder[0].merge(gptResp);
                     final var streamContent = gptResp.getStreamContent();
-                    if(!streamContent.isBlank()){
-                        respConsumer.accept(streamContent);
+                    if (!streamContent.isBlank()) {
+                        respConsumer.accept(new ChatResp(ChatResp.ChatStatus.TYPING, streamContent));
                     }
                 });
                 final var gptResp = respHolder[0];
@@ -65,15 +65,21 @@ public abstract class BaseToolModel implements ToolModel {
                     final var id = pluginCall.id();
                     final var name = pluginCall.name();
                     final var args = pluginCall.args();
+                    respConsumer.accept(new ChatResp(ChatResp.ChatStatus.FUNCTION_CALLING, name));
                     final var s = executePlugin(name, args);
-                    messages.add(Message.tool(id, name, s));
+                    if (id != null) {
+                        messages.add(Message.tool(id, name, s));
+                    } else {
+                        messages.add(Message.system(s, true));
+                    }
                 }
             }
             messages.removeIf(m -> Boolean.TRUE.equals(m.getThink()));
             messages.addLast(Message.assistant(resp, false));
         } catch (Exception e) {
+            LOGGER.error("Error: {}", e.getMessage(), e);
             messages.removeLast();
-            respConsumer.accept(e.getMessage());
+            respConsumer.accept(new ChatResp(ChatResp.ChatStatus.ERROR, e.getMessage()));
         }
     }
 
@@ -97,7 +103,7 @@ public abstract class BaseToolModel implements ToolModel {
 
     protected abstract List<PluginCall> getPluginCall(Message message);
 
-    protected String executePlugin(String pluginName, Map<String, Object> param) {
+    protected String executePlugin(String pluginName, Object param) {
         if (!this.pluginMap.containsKey(pluginName)) {
             return "不支持该工具";
         }
@@ -112,7 +118,7 @@ public abstract class BaseToolModel implements ToolModel {
         return result;
     }
 
-    public record PluginCall(String id, String name, Map<String, Object> args) {
+    public record PluginCall(String id, String name, Object args) {
 
     }
 }

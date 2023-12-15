@@ -3,7 +3,6 @@ package lk.eternal.ai.dto.resp;
 import lk.eternal.ai.dto.req.Message;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -43,13 +42,17 @@ public record GPTResp(String id, String object, long created, String model, List
             choices.get(0).message.setContent(Optional.ofNullable(choices.get(0).message.getContent()).orElse("")
                     + Optional.ofNullable(gptResp.choices().get(0).getDelta().getContent()).orElse(""));
 
-            final var thisToolCalls = choices.get(0).message.getTool_calls();
             final var toolCalls = gptResp.choices().get(0).getDelta().getTool_calls();
             if (toolCalls != null && !toolCalls.isEmpty()) {
-                for (int i = 0; i < toolCalls.size(); i++) {
-                    final var oldArguments = Optional.ofNullable(thisToolCalls.get(i).getFunction().getArguments()).orElse("");
-                    final var appendArguments = Optional.ofNullable(toolCalls.get(i).getFunction().getArguments()).orElse("");
-                    thisToolCalls.get(i).getFunction().setArguments(oldArguments + appendArguments);
+                final var thisToolCalls = choices.get(0).message.getTool_calls();
+                if (thisToolCalls == null || thisToolCalls.isEmpty()) {
+                    choices.get(0).getDelta().setTool_calls(toolCalls);
+                } else {
+                    for (int i = 0; i < toolCalls.size(); i++) {
+                        final var oldArguments = Optional.ofNullable(thisToolCalls.get(i).getFunction().getArguments()).orElse("");
+                        final var appendArguments = Optional.ofNullable(toolCalls.get(i).getFunction().getArguments()).orElse("");
+                        thisToolCalls.get(i).getFunction().setArguments(oldArguments + appendArguments);
+                    }
                 }
             }
         }

@@ -1,14 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    var chatBox = document.getElementById('chatBox');
+    let chatBox = document.getElementById('chatBox');
 
-    var clearBtn = document.getElementById('clearBtn');
-    var settingBtn = document.getElementById('settingBtn');
-    var settingBox = document.getElementById('settingBox');
-    var closeBtn = document.getElementById('closeBtn');
+    let clearBtn = document.getElementById('clearBtn');
+    let settingBtn = document.getElementById('settingBtn');
+    let settingBox = document.getElementById('settingBox');
+    let closeBtn = document.getElementById('closeBtn');
 
-    var inputTextArea = document.getElementById('inputTextArea');
-    var sendBtn = document.getElementById('sendBtn');
+    let inputTextArea = document.getElementById('inputTextArea');
+    let sendBtn = document.getElementById('sendBtn');
 
     window.addEventListener("beforeunload", clearMessages);
 
@@ -23,37 +23,37 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     sendBtn.addEventListener('click', sendMessage);
 
-    var aiModels = document.querySelectorAll('input[name="ai-model"]');
+    let aiModels = document.querySelectorAll('input[name="ai-model"]');
     aiModels.forEach(aiModel => {
       aiModel.addEventListener('change', function() {
-        var aiModel = document.querySelector('input[name="ai-model"]:checked').value;
+        let aiModel = document.querySelector('input[name="ai-model"]:checked').value;
         if(aiModel === 'tyqw'){
-            var nativeModel = document.querySelector('input[name="tool-model"][value="native"]');
-            var c = nativeModel.checked;
+            let nativeModel = document.querySelector('input[name="tool-model"][value="native"]');
+            let c = nativeModel.checked;
             if(c){
                 document.querySelector('input[name="tool-model"][value="none"]').checked = true;
             }
             nativeModel.disabled = true;
         }else{
-            var nativeModel = document.querySelector('input[name="tool-model"][value="native"]');
+            let nativeModel = document.querySelector('input[name="tool-model"][value="native"]');
             nativeModel.disabled = false;
         }
       });
     });
 
-    var toolModels = document.querySelectorAll('input[name="tool-model"]');
+    let toolModels = document.querySelectorAll('input[name="tool-model"]');
     toolModels.forEach(toolModel => {
       toolModel.addEventListener('change', function() {
-        var toolModel = document.querySelector('input[name="tool-model"]:checked').value;
+        let toolModel = document.querySelector('input[name="tool-model"]:checked').value;
         if(toolModel === 'native'){
-            var tyqwModel = document.querySelector('input[name="ai-model"][value="tyqw"]');
-            var c = tyqwModel.checked;
+            let tyqwModel = document.querySelector('input[name="ai-model"][value="tyqw"]');
+            let c = tyqwModel.checked;
             if(c){
                 document.querySelector('input[name="ai-model"][value="gpt3.5"]').checked = true;
             }
             tyqwModel.disabled = true;
         }else{
-            var tyqwModel = document.querySelector('input[name="ai-model"][value="tyqw"]');
+            let tyqwModel = document.querySelector('input[name="ai-model"][value="tyqw"]');
             tyqwModel.disabled = false;
         }
       });
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function clearMessages() {
-        var response = await fetch('/api', {
+        let response = await fetch('/api', {
             method: 'DELETE'
         });
 
@@ -78,13 +78,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function sendMessage() {
-        var question = inputTextArea.value;
+        let question = inputTextArea.value;
         if(question == undefined || question == ''){
             question = inputTextArea.placeholder;
         }
         inputTextArea.value = '';
 
-        var reqDiv = document.createElement('div');
+        let reqDiv = document.createElement('div');
         reqDiv.textContent = question;
         chatBox.appendChild(reqDiv);
 
@@ -92,17 +92,17 @@ document.addEventListener('DOMContentLoaded', function() {
         sendBtn.disabled = true;
 
 
-        var respDiv = document.createElement('div');
+        let respDiv = document.createElement('div');
         respDiv.innerHTML = '';
         respDiv.classList.add('loading');
         chatBox.appendChild(respDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        var toolModel = document.querySelector('input[name="tool-model"]:checked').value;
-        var aiModel = document.querySelector('input[name="ai-model"]:checked').value;
-        var gpt4Code = document.getElementById('gpt4Code').value;
+        let toolModel = document.querySelector('input[name="tool-model"]:checked').value;
+        let aiModel = document.querySelector('input[name="ai-model"]:checked').value;
+        let gpt4Code = document.getElementById('gpt4Code').value;
 
-        var response = await fetch('/api', {
+        let response = await fetch('/api', {
             method: 'POST',
             headers: {
                 'Content-Type': 'text/plain'
@@ -110,7 +110,6 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify({'aiModel': aiModel, 'toolModel': toolModel, 'question': question, 'gpt4Code': gpt4Code})
         });
 
-        respDiv.classList.remove('loading');
         if (response.ok) {
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
@@ -118,55 +117,77 @@ document.addEventListener('DOMContentLoaded', function() {
             let data = '';
             while (true) {
                 const { done, value } = await reader.read();
+                respDiv.classList.remove('loading');
                 if (done) {
                     break;
                 }
-                data += decoder.decode(value);
-                console.log(data)
+                let packets = decoder.decode(value).split('\n');
+                for (let i = 0; i < packets.length - 1; i++) {
+                    const packet = packets[i];
+                    let resp = JSON.parse(packet);
+                    console.log(resp)
 
-                respDiv.innerHTML = marked.parse(data);
+                    let content;
+                    switch(resp.status){
+                        case 'TYPING':
+                            data += resp.message;
+                            content = data;
+                            break;
+                        case 'FUNCTION_CALLING':
+                            content = '正在调用' + resp.message + '工具获取信息...';
+                            data = '';
+                            break;
+                        case 'ERROR':
+                            content = '发生错误: ' + resp.message;
+                            data = '';
+                            break;
+                    }
 
-                respDiv.querySelectorAll('pre code').forEach((el) => {
-                    hljs.highlightElement(el);
-                });
+                    respDiv.innerHTML = marked.parse(content);
 
-                // 获取 p 元素中的所有 pre 元素
-                var preElements = respDiv.getElementsByTagName('pre');
-
-                // 为每个 pre 元素添加点击事件
-                for (var i = 0; i < preElements.length; i++) {
-                    var copyButton = document.createElement('button');
-                    copyButton.textContent = '复制';
-                    copyButton.className = 'copy-button';
-                    preElements[i].appendChild(copyButton);
-
-                    copyButton.addEventListener('click', function(event) {
-                        var textarea = document.createElement('textarea');
-                        textarea.value = event.target.parentNode.textContent.replace('复制', '');
-                        document.body.appendChild(textarea);
-                        textarea.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(textarea);
-
-                        var alert = document.createElement('div');
-                        alert.textContent = '复制成功！';
-                        alert.style.position = 'fixed';
-                        alert.style.bottom = '50%';
-                        alert.style.left = '50%';
-                        alert.style.transform = 'translate(-50%, 50%)';
-                        alert.style.backgroundColor = '#20B2AA';
-                        alert.style.color = 'white';
-                        alert.style.padding = '10px';
-                        alert.style.borderRadius = '5px';
-                        document.body.appendChild(alert);
-                        setTimeout(function() {
-                            document.body.removeChild(alert);
-                        }, 2000);
+                    respDiv.querySelectorAll('pre code').forEach((el) => {
+                        hljs.highlightElement(el);
                     });
+
+                    // 获取 p 元素中的所有 pre 元素
+                    let preElements = respDiv.getElementsByTagName('pre');
+
+                    // 为每个 pre 元素添加点击事件
+                    for (let j = 0; j < preElements.length; j++) {
+                        let copyButton = document.createElement('button');
+                        copyButton.textContent = '复制';
+                        copyButton.className = 'copy-button';
+                        preElements[j].appendChild(copyButton);
+
+                        copyButton.addEventListener('click', function(event) {
+                            let textarea = document.createElement('textarea');
+                            textarea.value = event.target.parentNode.textContent.replace('复制', '');
+                            document.body.appendChild(textarea);
+                            textarea.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(textarea);
+
+                            let alert = document.createElement('div');
+                            alert.textContent = '复制成功！';
+                            alert.style.position = 'fixed';
+                            alert.style.bottom = '50%';
+                            alert.style.left = '50%';
+                            alert.style.transform = 'translate(-50%, 50%)';
+                            alert.style.backgroundColor = '#20B2AA';
+                            alert.style.color = 'white';
+                            alert.style.padding = '10px';
+                            alert.style.borderRadius = '5px';
+                            document.body.appendChild(alert);
+                            setTimeout(function() {
+                                document.body.removeChild(alert);
+                            }, 2000);
+                        });
+                    }
+                    chatBox.scrollTop = chatBox.scrollHeight;
                 }
-                chatBox.scrollTop = chatBox.scrollHeight;
             }
         }else{
+            respDiv.classList.remove('loading');
             console.error('Error:', response.status, response.statusText);
             respDiv.innerHTML = '<div>' + response.status + ':' + response.statusText + '</div>';
             chatBox.scrollTop = chatBox.scrollHeight;

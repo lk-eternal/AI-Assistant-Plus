@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -55,7 +56,7 @@ public class NativeToolModel extends BaseToolModel {
     protected List<PluginCall> getPluginCall(Message message) {
         return Optional.ofNullable(message.getTool_calls())
                 .map(tcs -> tcs.stream()
-                        .map(tc -> new PluginCall(tc.getId(), tc.getFunction().getName(), Mapper.readValueNotError(tc.getFunction().getArguments(), new TypeReference<>() {
+                        .map(tc -> new PluginCall(tc.getId(), tc.getFunction().getName(), Mapper.readValueNotError(tc.getFunction().getArguments(), new TypeReference<Map<String, Object>>() {
                         })))
                         .collect(Collectors.toList()))
                 .orElse(null);

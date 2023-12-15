@@ -55,10 +55,16 @@ public class GoogleSearchPlugin implements Plugin {
     }
 
     @Override
-    public String execute(Map<String, Object> args) {
+    public String execute(Object args) {
+        String exp;
+        if(args instanceof Map<?,?>){
+            exp = ((Map<String, Object>)args).get("q").toString();
+        }else{
+            exp = args.toString();
+        }
         try {
             final HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s&start=1&num=10".formatted(this.key, this.cx, URLEncoder.encode(args.get("q").toString(), StandardCharsets.UTF_8))))
+                    .uri(URI.create("https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s&start=1&num=10".formatted(this.key, this.cx, URLEncoder.encode(exp, StandardCharsets.UTF_8))))
                     .build();
             final var response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
             final String body = response.body();

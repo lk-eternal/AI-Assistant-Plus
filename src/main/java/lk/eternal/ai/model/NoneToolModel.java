@@ -1,6 +1,7 @@
 package lk.eternal.ai.model;
 
 import lk.eternal.ai.dto.req.Message;
+import lk.eternal.ai.dto.resp.ChatResp;
 import lk.eternal.ai.exception.GPTException;
 import lk.eternal.ai.service.AiModel;
 import org.slf4j.Logger;
@@ -24,7 +25,7 @@ public class NoneToolModel implements ToolModel {
     }
 
     @Override
-    public void question(AiModel aiModel, LinkedList<Message> messages, Consumer<String> respConsumer) {
+    public void question(AiModel aiModel, LinkedList<Message> messages, Consumer<ChatResp> respConsumer) {
         LOGGER.info("User: {}", messages.getLast().getContent());
         while (messages.size() > MAX_HISTORY) {
             messages.removeFirst();
@@ -34,13 +35,13 @@ public class NoneToolModel implements ToolModel {
             aiModel.request(messages, null, null, resp -> {
                 final var streamContent = resp.getStreamContent();
                 sb.append(streamContent);
-                respConsumer.accept(streamContent);
+                respConsumer.accept(new ChatResp(ChatResp.ChatStatus.TYPING, streamContent));
             });
             LOGGER.info("AI: {}", sb);
             messages.addLast(Message.assistant(sb.toString(), false));
         } catch (GPTException e) {
             LOGGER.info("AI: {}", e.getMessage());
-            respConsumer.accept(e.getMessage());
+            respConsumer.accept(new ChatResp(ChatResp.ChatStatus.ERROR, e.getMessage()));
             messages.removeLast();
         }
     }

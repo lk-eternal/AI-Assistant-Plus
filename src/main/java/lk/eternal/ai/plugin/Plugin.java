@@ -3,8 +3,6 @@ package lk.eternal.ai.plugin;
 
 import lk.eternal.ai.dto.req.Parameters;
 
-import java.util.Map;
-
 public interface Plugin {
 
     String name();
@@ -13,5 +11,5 @@ public interface Plugin {
 
     Parameters parameters();
 
-    String execute(Map<String, Object> args);
+    String execute(Object args);
 }
