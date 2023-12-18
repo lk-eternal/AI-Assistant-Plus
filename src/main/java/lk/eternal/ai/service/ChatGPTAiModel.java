@@ -58,39 +58,6 @@ public class ChatGPTAiModel implements AiModel {
     }
 
     @Override
-    public GPTResp request(List<Message> messages, List<String> stop, List<Tool> tools) throws GPTException {
-        final var gptReq = new GPTReq(this.model, messages, stop, tools, true);
-        final var reqStr = Optional.ofNullable(Mapper.writeAsStringNotError(gptReq))
-                .orElseThrow(() -> new GPTException("req can not be null"));
-
-        final HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(this.openaiApiUrl))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + this.openaiApiKey)
-                .POST(HttpRequest.BodyPublishers.ofString(reqStr))
-                .build();
-
-        final HttpResponse<String> response;
-        try {
-            response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (IOException | InterruptedException e) {
-            LOGGER.error("请求OpenAI失败: {}", e.getMessage(), e);
-            throw new GPTException("请求OpenAI失败: " + e.getMessage());
-        }
-        final var gptResp = Mapper.readValueNotError(response.body(), GPTResp.class);
-
-        final var error = Optional.ofNullable(gptResp).map(GPTResp::error).orElse(null);
-        if (error != null) {
-            if ("rate_limit_exceeded".equals(error.code())) {
-                throw new GPTException(response.statusCode() + ":请求过于频繁,请稍后再试!");
-            }
-            throw new GPTException(Optional.ofNullable(error.message())
-                    .orElseGet(() -> response.statusCode() + ":发生未知错误,请稍后再试!"));
-        }
-        return gptResp;
-    }
-
-    @Override
     public void request(List<Message> messages, List<String> stop, List<Tool> tools, Consumer<GPTResp> respConsumer) throws GPTException {
         final var gptReq = new GPTReq(this.model, messages, stop, tools, true);
         final var reqStr = Optional.ofNullable(Mapper.writeAsStringNotError(gptReq))
@@ -111,14 +78,14 @@ public class ChatGPTAiModel implements AiModel {
             BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()));
             String line;
             while ((line = reader.readLine()) != null) {
-                if(line.isBlank()){
+                if (line.isBlank()) {
                     continue;
                 }
                 final var gptResp = Mapper.readValueNotError(line.substring(line.indexOf("{")), GPTResp.class);
-                if(gptResp == null){
+                if (gptResp == null) {
                     continue;
                 }
-                if(gptResp.choices().get(0).getFinish_reason() != null){
+                if (gptResp.choices().get(0).getFinish_reason() != null) {
                     break;
                 }
                 respConsumer.accept(gptResp);

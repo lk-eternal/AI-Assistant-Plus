@@ -1,10 +1,5 @@
 package lk.eternal.ai.service;// Copyright (c) Alibaba, Inc. and its affiliates.
 
-import com.alibaba.dashscope.aigc.generation.GenerationResult;
-import com.alibaba.dashscope.aigc.generation.models.QwenParam;
-import com.alibaba.dashscope.common.Message;
-import com.alibaba.dashscope.common.MessageManager;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lk.eternal.ai.dto.req.GeminiReq;
 import lk.eternal.ai.dto.req.Tool;
 import lk.eternal.ai.dto.resp.GPTResp;
@@ -24,6 +19,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -59,58 +55,6 @@ public class GeminiAiModel implements AiModel {
     }
 
     @Override
-    public GPTResp request(List<lk.eternal.ai.dto.req.Message> messages, List<String> stop, List<Tool> tools) throws GPTException {
-        final var geminiReq = new GeminiReq(messages.stream().map(m -> GeminiReq.Content.create(m.getRole(), m.getContent())).collect(Collectors.toList()));
-        final var reqStr = Optional.ofNullable(Mapper.writeAsStringNotError(geminiReq))
-                .orElseThrow(() -> new GPTException("req can not be null"));
-
-        final HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(this.url + ":generateContent?key=" + this.key))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(reqStr))
-                .build();
-
-        final HttpResponse<InputStream> response;
-        try {
-            response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
-
-            // 读取返回的流式数据
-            BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()));
-            StringBuilder jsonText = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.isBlank()) {
-                    continue;
-                }
-                LOGGER.info(line);
-                if(line.equals(",")){
-                    jsonText = new StringBuilder();
-                    continue;
-                }
-
-                if(line.equals("[{")){
-                    jsonText.append("{");
-                }else{
-                    jsonText.append(line);
-                }
-                if(line.equals("}")){
-                    LOGGER.info(jsonText.toString());
-                    final var candidate = Mapper.readValueNotError(jsonText.toString(), new TypeReference<GeminiResp.Candidate>() {
-                    });
-                    System.out.println(candidate);
-                }
-
-//                respConsumer.accept(null);
-            }
-
-        } catch (IOException | InterruptedException e) {
-            LOGGER.error("请求Gemini失败: {}", e.getMessage(), e);
-            throw new GPTException("请求Gemini失败: " + e.getMessage());
-        }
-        return null;
-    }
-
-    @Override
     public void request(List<lk.eternal.ai.dto.req.Message> messages, List<String> stop, List<Tool> tools, Consumer<GPTResp> respConsumer) throws GPTException {
         final var geminiReq = new GeminiReq(messages.stream().map(m -> GeminiReq.Content.create(m.getRole(), m.getContent())).collect(Collectors.toList()));
         final var reqStr = Optional.ofNullable(Mapper.writeAsStringNotError(geminiReq))
@@ -125,8 +69,6 @@ public class GeminiAiModel implements AiModel {
         final HttpResponse<InputStream> response;
         try {
             response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
-
-            // 读取返回的流式数据
             BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()));
             StringBuilder jsonText = new StringBuilder();
             String line;
@@ -134,27 +76,25 @@ public class GeminiAiModel implements AiModel {
                 if (line.isBlank()) {
                     continue;
                 }
-                LOGGER.info(line);
-                if(line.equals(",")){
+                if (line.equals(",")) {
                     jsonText = new StringBuilder();
                     continue;
                 }
-
-                if(line.equals("[{")){
+                if (line.equals("[{")) {
                     jsonText.append("{");
-                }else{
+                } else {
                     jsonText.append(line);
                 }
-                if(line.equals("}")){
-                    LOGGER.info(jsonText.toString());
-                    final var geminiResp = Mapper.readValueNotError(jsonText.toString(), new TypeReference<GeminiResp>() {
-                    });
-                    System.out.println(geminiResp);
+                if (line.equals("}")) {
+                    final var geminiResp = Mapper.readValueNotError(jsonText.toString(), GeminiResp.class);
+                    respConsumer.accept(new GPTResp(null, null, System.currentTimeMillis(), "gemini"
+                            , Optional.ofNullable(geminiResp).map(GeminiResp::getCandidates).orElseGet(Collections::emptyList)
+                            .stream()
+                            .map(c -> new GPTResp.Choice(1, null, new lk.eternal.ai.dto.req.Message(c.getContent().getRole(), c.getContent().getParts().stream().map(GeminiResp.Part::getText).collect(Collectors.joining()), null, null, null, null), c.getFinishReason()))
+                            .collect(Collectors.toList())
+                            , null, null, null));
                 }
-
-//                respConsumer.accept(null);
             }
-
         } catch (IOException | InterruptedException e) {
             LOGGER.error("请求Gemini失败: {}", e.getMessage(), e);
             throw new GPTException("请求Gemini失败: " + e.getMessage());
