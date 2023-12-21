@@ -30,24 +30,20 @@ public final class Message {
         this.think = think;
     }
 
-    public static Message system(String content, boolean isThink) {
-        return new Message("system", content, null, null, null, isThink);
+    public static Message create(String role, String content, boolean isThink) {
+        return new Message(role, content, null, null, null, isThink);
     }
 
-    public static Message assistant(String content, boolean isThink) {
-        return new Message("assistant", content, null, null, null, isThink);
+    public static Message create(String role, String content, List<GPTResp.ToolCall> tool_calls) {
+        return new Message(role, content, tool_calls, null, null, true);
     }
 
-    public static Message assistant(String content, List<GPTResp.ToolCall> tool_calls) {
-        return new Message("assistant", content, tool_calls, null, null, true);
+    public static Message create(String role, String id, String name, String content) {
+        return new Message(role, content, null, id, name, true);
     }
 
     public static Message user(String content) {
         return new Message("user", content, null, null, null, false);
-    }
-
-    public static Message tool(String id, String name, String content) {
-        return new Message("tool", content, null, id, name, true);
     }
 
     public String getRole() {

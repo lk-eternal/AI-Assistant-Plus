@@ -1,6 +1,7 @@
 package lk.eternal.ai.dto.resp;
 
 import lk.eternal.ai.dto.req.Message;
+import lk.eternal.ai.util.Mapper;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +27,18 @@ public record GPTResp(String id, String object, long created, String model, List
                 .orElse("");
     }
 
+    public String getRole() {
+        return Optional.ofNullable(choices)
+                .filter(Predicate.not(List::isEmpty))
+                .map(cs -> cs.get(0))
+                .flatMap(c -> Optional.ofNullable(c.getMessage())
+                        .map(Message::getRole)
+                        .or(() -> Optional.ofNullable(c.getDelta())
+                                .map(Message::getRole)
+                                ))
+                .orElse("");
+    }
+
     public String getStreamContent() {
         return Optional.ofNullable(choices)
                 .filter(Predicate.not(List::isEmpty))
@@ -36,8 +49,16 @@ public record GPTResp(String id, String object, long created, String model, List
     }
 
     public void merge(GPTResp gptResp) {
-        if (choices.get(0).message == null) {
-            choices.get(0).message = gptResp.choices().get(0).getDelta();
+        if (choices.isEmpty() || choices.get(0).message == null) {
+            if (choices.isEmpty()) {
+                if (gptResp.choices() == null || gptResp.choices().isEmpty()) {
+                    choices.add(new Choice(0, Message.create("model", "", null), null, null));
+                } else {
+                    choices.add(gptResp.choices().get(0));
+                }
+            } else {
+                choices.get(0).message = gptResp.choices().get(0).getDelta();
+            }
         } else {
             choices.get(0).message.setContent(Optional.ofNullable(choices.get(0).message.getContent()).orElse("")
                     + Optional.ofNullable(gptResp.choices().get(0).getDelta().getContent()).orElse(""));

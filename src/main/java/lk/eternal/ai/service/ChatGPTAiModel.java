@@ -19,6 +19,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -58,8 +59,12 @@ public class ChatGPTAiModel implements AiModel {
     }
 
     @Override
-    public void request(List<Message> messages, List<String> stop, List<Tool> tools, Consumer<GPTResp> respConsumer) throws GPTException {
-        final var gptReq = new GPTReq(this.model, messages, stop, tools, true);
+    public void request(String prompt, List<Message> messages, List<String> stop, List<Tool> tools, Consumer<GPTResp> respConsumer) throws GPTException {
+        final var requestMessages = new LinkedList<>(messages);
+        if (prompt != null) {
+            requestMessages.addFirst(Message.create("system", prompt, false));
+        }
+        final var gptReq = new GPTReq(this.model, requestMessages, stop, tools, true);
         final var reqStr = Optional.ofNullable(Mapper.writeAsStringNotError(gptReq))
                 .orElseThrow(() -> new GPTException("req can not be null"));
 
@@ -95,5 +100,15 @@ public class ChatGPTAiModel implements AiModel {
             LOGGER.error("请求OpenAI失败: {}", e.getMessage(), e);
             throw new GPTException("请求OpenAI失败: " + e.getMessage());
         }
+    }
+
+    @Override
+    public String getToolRole() {
+        return "system";
+    }
+
+    @Override
+    public String getModelRole() {
+        return "assistant";
     }
 }

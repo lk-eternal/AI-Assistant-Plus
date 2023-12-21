@@ -54,13 +54,13 @@ public abstract class BaseToolModel implements ToolModel {
                 final var gptResp = respHolder[0];
                 final var aiMessage = gptResp.getMessage();
                 final var pluginCalls = getPluginCall(aiMessage);
+                resp = gptResp.getContent();
+                LOGGER.info("AI: {}", resp);
                 if (pluginCalls == null || pluginCalls.isEmpty()) {
-                    resp = gptResp.getContent();
-                    LOGGER.info("AI: {}", resp);
                     messages.addLast(aiMessage);
                     break;
                 }
-                messages.addLast(Message.assistant(aiMessage.getContent(), aiMessage.getTool_calls()));
+                messages.addLast(Message.create(aiModel.getModelRole(), aiMessage.getContent(), aiMessage.getTool_calls()));
                 for (PluginCall pluginCall : pluginCalls) {
                     final var id = pluginCall.id();
                     final var name = pluginCall.name();
@@ -68,14 +68,13 @@ public abstract class BaseToolModel implements ToolModel {
                     respConsumer.accept(new ChatResp(ChatResp.ChatStatus.FUNCTION_CALLING, name));
                     final var s = executePlugin(name, args);
                     if (id != null) {
-                        messages.add(Message.tool(id, name, s));
+                        messages.add(Message.create("tool", id, name, s));
                     } else {
-                        messages.add(Message.system(s, true));
+                        messages.add(Message.create(aiModel.getToolRole(), s, true));
                     }
                 }
             }
             messages.removeIf(m -> Boolean.TRUE.equals(m.getThink()));
-            messages.addLast(Message.assistant(resp, false));
         } catch (Exception e) {
             LOGGER.error("Error: {}", e.getMessage(), e);
             messages.removeLast();
@@ -87,12 +86,9 @@ public abstract class BaseToolModel implements ToolModel {
         final var prompt = getPrompt();
         while (messages.size() > MAX_HISTORY) {
             messages.removeFirst();
+            messages.removeFirst();
         }
-        final var requestMessages = new LinkedList<>(messages);
-        if (prompt != null) {
-            requestMessages.addFirst(Message.system(prompt, false));
-        }
-        aiModel.request(requestMessages, stops, tools, respConsumer);
+        aiModel.request(prompt, messages, stops, tools, respConsumer);
     }
 
     protected abstract String getPrompt();

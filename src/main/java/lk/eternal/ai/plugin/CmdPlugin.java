@@ -5,7 +5,9 @@ import lk.eternal.ai.dto.req.Parameters;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class CmdPlugin implements Plugin {
 
@@ -33,21 +35,25 @@ public class CmdPlugin implements Plugin {
             exp = args.toString();
         }
 
+        StringBuilder result = new StringBuilder();
         try {
             ProcessBuilder processBuilder = new ProcessBuilder("cmd.exe", "/c", exp);
             processBuilder.redirectErrorStream(true);
+            processBuilder.environment().put("LANG", "zh_CN.UTF-8");
             Process process = processBuilder.start();
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
             String line;
-            StringBuilder result = new StringBuilder();
             while ((line = reader.readLine()) != null) {
                 result.append(line).append("\n");
             }
-            process.waitFor();
+            boolean completed = process.waitFor(2, TimeUnit.SECONDS);
+            if (!completed) {
+                process.destroy();
+            }
             return result.toString();
         } catch (IOException | InterruptedException e) {
-            return e.getMessage();
+            return result.toString();
         }
     }
 }

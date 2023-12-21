@@ -6,6 +6,8 @@ public class GeminiResp {
 
     private List<Candidate> candidates;
     private PromptFeedback promptFeedback;
+    private Error error;
+
 
     public List<Candidate> getCandidates() {
         return candidates;
@@ -21,6 +23,14 @@ public class GeminiResp {
 
     public void setPromptFeedback(PromptFeedback promptFeedback) {
         this.promptFeedback = promptFeedback;
+    }
+
+    public Error getError() {
+        return error;
+    }
+
+    public void setError(Error error) {
+        this.error = error;
     }
 
     public static class Candidate {
@@ -197,6 +207,37 @@ public class GeminiResp {
 
         public void setPromptFeedback(PromptFeedback promptFeedback) {
             this.promptFeedback = promptFeedback;
+        }
+    }
+
+    public static class Error {
+
+        private int code;
+        private String message;
+        private String status;
+
+        public int getCode() {
+            return code;
+        }
+
+        public void setCode(int code) {
+            this.code = code;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
         }
     }
 }

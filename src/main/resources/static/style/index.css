@@ -145,7 +145,6 @@ button:hover {
 }
 
 #chatBox > div pre {
-    max-height: 35vh;
     position: relative;
     line-height: 2vh;
     color: #f8f8ff;
@@ -153,7 +152,7 @@ button:hover {
     border-radius: 5px;
     padding: 10px;
     box-shadow: 2px 2px 5px black;
-    overflow: auto;
+    overflow: none;
     white-space: pre-wrap;
     word-wrap: break-word;
 }
@@ -258,6 +257,10 @@ div .copy-button {
     }
 }
 
+#settingBox > div{
+    width: 50%;
+}
+
 #settingBox p{
     margin: 0 0 0 3vh;
     font-size: 0.75em;
@@ -276,6 +279,10 @@ div .copy-button {
         width: 3vw;
         height: 3vw;
     }
+}
+
+#gpt4Code{
+    width: 40%;
 }
 
 @media (max-width: 1000px) and (min-height: 800px){

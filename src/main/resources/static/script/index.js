@@ -23,38 +23,71 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     sendBtn.addEventListener('click', sendMessage);
 
-    let aiModels = document.querySelectorAll('input[name="ai-model"]');
-    aiModels.forEach(aiModel => {
-      aiModel.addEventListener('change', function() {
-        let aiModel = document.querySelector('input[name="ai-model"]:checked').value;
-        if(aiModel === 'tyqw'){
-            let nativeModel = document.querySelector('input[name="tool-model"][value="native"]');
-            let c = nativeModel.checked;
-            if(c){
-                document.querySelector('input[name="tool-model"][value="none"]').checked = true;
+    let aiModel = {
+        getAiModelValue(){
+            return document.querySelector('input[name="ai-model"]:checked').value;
+        },
+
+        getAiModel(modelName){
+            return document.querySelector('input[name="ai-model"][value="' + modelName + '"]');
+        },
+
+        disableAiModel(modelName){
+            let model = this.getAiModel(modelName);
+            if(model.checked){
+                this.getAiModel('gpt3.5').checked = true;
             }
-            nativeModel.disabled = true;
+            model.disabled = true;
+        },
+
+        enableAiModel(modelName){
+            this.getAiModel(modelName).disabled = false;
+        },
+    }
+
+    let toolModel = {
+        getToolModelValue(){
+            return document.querySelector('input[name="tool-model"]:checked').value;
+        },
+
+        getToolModel(modelName){
+            return document.querySelector('input[name="tool-model"][value="' + modelName + '"]');
+        },
+
+        disableToolModel(modelName){
+            let model = this.getToolModel(modelName);
+            if(model.checked){
+                this.getToolModel('none').checked = true;
+            }
+            model.disabled = true;
+        },
+
+        enableToolModel(modelName){
+            this.getToolModel(modelName).disabled = false;
+        },
+    }
+
+    let toolModels = document.querySelectorAll('input[name="tool-model"]');
+    toolModels.forEach(tm => {
+      tm.addEventListener('change', function() {
+        if(toolModel.getToolModelValue() === 'native'){
+            aiModel.disableAiModel('tyqw');
+            aiModel.disableAiModel('gemini');
         }else{
-            let nativeModel = document.querySelector('input[name="tool-model"][value="native"]');
-            nativeModel.disabled = false;
+            aiModel.enableAiModel('tyqw');
+            aiModel.enableAiModel('gemini');
         }
       });
     });
 
-    let toolModels = document.querySelectorAll('input[name="tool-model"]');
-    toolModels.forEach(toolModel => {
-      toolModel.addEventListener('change', function() {
-        let toolModel = document.querySelector('input[name="tool-model"]:checked').value;
-        if(toolModel === 'native'){
-            let tyqwModel = document.querySelector('input[name="ai-model"][value="tyqw"]');
-            let c = tyqwModel.checked;
-            if(c){
-                document.querySelector('input[name="ai-model"][value="gpt3.5"]').checked = true;
-            }
-            tyqwModel.disabled = true;
+    let aiModels = document.querySelectorAll('input[name="ai-model"]');
+    aiModels.forEach(am => {
+      am.addEventListener('change', function() {
+        let aiModelValue = aiModel.getAiModelValue();
+        if(aiModelValue !== 'gpt3.5' && aiModelValue !== 'gpt4'){
+            toolModel.disableToolModel('native');
         }else{
-            let tyqwModel = document.querySelector('input[name="ai-model"][value="tyqw"]');
-            tyqwModel.disabled = false;
+            toolModel.enableToolModel('native');
         }
       });
     });
@@ -98,8 +131,6 @@ document.addEventListener('DOMContentLoaded', function() {
         chatBox.appendChild(respDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        let toolModel = document.querySelector('input[name="tool-model"]:checked').value;
-        let aiModel = document.querySelector('input[name="ai-model"]:checked').value;
         let gpt4Code = document.getElementById('gpt4Code').value;
 
         let response = await fetch('/api', {
@@ -107,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: {
                 'Content-Type': 'text/plain'
             },
-            body: JSON.stringify({'aiModel': aiModel, 'toolModel': toolModel, 'question': question, 'gpt4Code': gpt4Code})
+            body: JSON.stringify({'aiModel': aiModel.getAiModelValue(), 'toolModel': toolModel.getToolModelValue(), 'question': question, 'gpt4Code': gpt4Code})
         });
 
         if (response.ok) {
@@ -125,7 +156,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 for (let i = 0; i < packets.length - 1; i++) {
                     const packet = packets[i];
                     let resp = JSON.parse(packet);
-                    console.log(resp)
 
                     let content;
                     switch(resp.status){
@@ -149,7 +179,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         hljs.highlightElement(el);
                     });
 
-                    // 获取 p 元素中的所有 pre 元素
+                    // 获取所有 p 元素
+                    let pElements = respDiv.getElementsByTagName('p');
+                    for (let j = 0; j < pElements.length; j++) {
+                        pElements[j].innerHTML = pElements[j].textContent.replace(/\n/g, '<br>');
+                    }
+
+                    // 获取所有 pre 元素
                     let preElements = respDiv.getElementsByTagName('pre');
 
                     // 为每个 pre 元素添加点击事件

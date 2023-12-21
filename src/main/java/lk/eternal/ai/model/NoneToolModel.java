@@ -2,6 +2,7 @@ package lk.eternal.ai.model;
 
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.dto.resp.ChatResp;
+import lk.eternal.ai.dto.resp.GPTResp;
 import lk.eternal.ai.exception.GPTException;
 import lk.eternal.ai.service.AiModel;
 import org.slf4j.Logger;
@@ -29,16 +30,21 @@ public class NoneToolModel implements ToolModel {
         LOGGER.info("User: {}", messages.getLast().getContent());
         while (messages.size() > MAX_HISTORY) {
             messages.removeFirst();
+            messages.removeFirst();
         }
-        StringBuilder sb = new StringBuilder();
         try {
-            aiModel.request(messages, null, null, resp -> {
+            final GPTResp[] respHolder = {null};
+            aiModel.request(null, messages, null, null, resp -> {
+                if (respHolder[0] == null) {
+                    respHolder[0] = resp;
+                }
+                respHolder[0].merge(resp);
                 final var streamContent = resp.getStreamContent();
-                sb.append(streamContent);
                 respConsumer.accept(new ChatResp(ChatResp.ChatStatus.TYPING, streamContent));
             });
-            LOGGER.info("AI: {}", sb);
-            messages.addLast(Message.assistant(sb.toString(), false));
+            final var gptResp = respHolder[0];
+            LOGGER.info("AI: {}", gptResp.getMessage().getContent());
+            messages.addLast(gptResp.getMessage());
         } catch (GPTException e) {
             LOGGER.info("AI: {}", e.getMessage());
             respConsumer.accept(new ChatResp(ChatResp.ChatStatus.ERROR, e.getMessage()));

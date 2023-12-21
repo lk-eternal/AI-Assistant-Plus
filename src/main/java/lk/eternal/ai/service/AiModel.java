@@ -13,5 +13,9 @@ public interface AiModel {
 
     String getName();
 
-    void request(List<Message> messages, List<String> stop, List<Tool> tools, Consumer<GPTResp> respConsumer) throws GPTException;
+    void request(String prompt, List<Message> messages, List<String> stop, List<Tool> tools, Consumer<GPTResp> respConsumer) throws GPTException;
+
+    String getToolRole();
+
+    String getModelRole();
 }

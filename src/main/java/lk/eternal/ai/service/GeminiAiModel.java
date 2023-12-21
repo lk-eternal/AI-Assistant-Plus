@@ -1,6 +1,7 @@
-package lk.eternal.ai.service;// Copyright (c) Alibaba, Inc. and its affiliates.
+package lk.eternal.ai.service;
 
 import lk.eternal.ai.dto.req.GeminiReq;
+import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.dto.req.Tool;
 import lk.eternal.ai.dto.resp.GPTResp;
 import lk.eternal.ai.dto.resp.GeminiResp;
@@ -10,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.ProxySelector;
@@ -20,6 +20,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -55,8 +56,14 @@ public class GeminiAiModel implements AiModel {
     }
 
     @Override
-    public void request(List<lk.eternal.ai.dto.req.Message> messages, List<String> stop, List<Tool> tools, Consumer<GPTResp> respConsumer) throws GPTException {
-        final var geminiReq = new GeminiReq(messages.stream().map(m -> GeminiReq.Content.create(m.getRole(), m.getContent())).collect(Collectors.toList()));
+    public void request(String prompt, List<Message> messages, List<String> stop, List<Tool> tools, Consumer<GPTResp> respConsumer) throws GPTException {
+        final var contents = messages.stream().map(m -> GeminiReq.Content.create(m.getRole(), m.getContent())).collect(Collectors.toList());
+        final var requestMessages = new LinkedList<>(contents);
+        if (prompt != null) {
+            requestMessages.addFirst(GeminiReq.Content.create("user", prompt));
+            requestMessages.add(1, GeminiReq.Content.create("model", "好的,我明白了."));
+        }
+        final var geminiReq = new GeminiReq(requestMessages);
         final var reqStr = Optional.ofNullable(Mapper.writeAsStringNotError(geminiReq))
                 .orElseThrow(() -> new GPTException("req can not be null"));
 
@@ -87,6 +94,12 @@ public class GeminiAiModel implements AiModel {
                 }
                 if (line.equals("}")) {
                     final var geminiResp = Mapper.readValueNotError(jsonText.toString(), GeminiResp.class);
+                    if (geminiResp == null) {
+                        throw new RuntimeException("Not response");
+                    }
+                    if (geminiResp.getError() != null) {
+                        throw new RuntimeException(geminiResp.getError().getMessage());
+                    }
                     respConsumer.accept(new GPTResp(null, null, System.currentTimeMillis(), "gemini"
                             , Optional.ofNullable(geminiResp).map(GeminiResp::getCandidates).orElseGet(Collections::emptyList)
                             .stream()
@@ -95,9 +108,19 @@ public class GeminiAiModel implements AiModel {
                             , null, null, null));
                 }
             }
-        } catch (IOException | InterruptedException e) {
+        } catch (Exception e) {
             LOGGER.error("请求Gemini失败: {}", e.getMessage(), e);
             throw new GPTException("请求Gemini失败: " + e.getMessage());
         }
+    }
+
+    @Override
+    public String getToolRole() {
+        return "user";
+    }
+
+    @Override
+    public String getModelRole() {
+        return "model";
     }
 }
