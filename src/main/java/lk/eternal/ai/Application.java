@@ -13,7 +13,9 @@ import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.util.Arrays;
 import java.util.Properties;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class Application {
     private static final Logger LOGGER = LoggerFactory.getLogger(Application.class);
@@ -27,7 +29,9 @@ public class Application {
         server.createContext("/api", new ApiHandler());
         server.createContext("/poe", new PoeHandler());
         server.createContext("/", new ResourceHandler("static"));
-        server.setExecutor(Executors.newFixedThreadPool(1000));
+        server.setExecutor(new ThreadPoolExecutor(10, 1000,
+                0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>()));
         server.start();
     }
 

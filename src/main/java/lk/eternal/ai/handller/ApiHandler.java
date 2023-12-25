@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpCookie;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.function.Predicate;
 
 public class ApiHandler implements HttpHandler {
@@ -31,10 +32,11 @@ public class ApiHandler implements HttpHandler {
 
     private final String[] allowedOrigins;
 
-    public record User(String id, LinkedList<Message> messages) {
-    }
+    private final Map<String, LinkedList<Message>> userMessageMap = new ConcurrentHashMap<>();
 
-    private final Map<String, User> userMap = new HashMap<>();
+    private final ConcurrentHashMap<String, ScheduledFuture<?>> autoRemoveUserMap = new ConcurrentHashMap<>();
+    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+
     private final Map<String, ToolModel> toolModelMap = new HashMap<>();
     private final Map<String, AiModel> aiModelMap = new HashMap<>();
 
@@ -81,7 +83,7 @@ public class ApiHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        if (!validOrigin(exchange)){
+        if (!validOrigin(exchange)) {
             return;
         }
 
@@ -101,8 +103,8 @@ public class ApiHandler implements HttpHandler {
                 sessionId = UUID.randomUUID().toString();
                 this.setSessionIdInCookie(exchange.getResponseHeaders(), sessionId);
             }
-            final var finalSessionId = sessionId;
-            final var user = this.userMap.computeIfAbsent(sessionId, k -> new User(finalSessionId, new LinkedList<>()));
+            resetUserLifeTime(sessionId);
+            final var messages = this.userMessageMap.computeIfAbsent(sessionId, k -> new LinkedList<>());
 
             final var aiModelName = Optional.ofNullable(appReq.aiModel())
                     .filter(this.aiModelMap::containsKey)
@@ -119,14 +121,14 @@ public class ApiHandler implements HttpHandler {
                 return;
             }
 
-            user.messages().addLast(Message.user(appReq.question()));
+            messages.addLast(Message.user(appReq.question()));
 
             exchange.getResponseHeaders().set("Content-Type", "text/event-stream");
             exchange.getResponseHeaders().set("Cache-Control", "no-cache");
             exchange.getResponseHeaders().set("Connection", "keep-alive");
             exchange.sendResponseHeaders(200, 0);
             final var os = exchange.getResponseBody();
-            this.toolModelMap.get(toolModelName).question(this.aiModelMap.get(aiModelName), user.messages(), resp -> {
+            this.toolModelMap.get(toolModelName).question(this.aiModelMap.get(aiModelName), messages, resp -> {
                 try {
                     final var respStr = Mapper.writeAsStringNotError(resp);
                     if (respStr != null) {
@@ -141,7 +143,7 @@ public class ApiHandler implements HttpHandler {
             os.close();
         } else if (exchange.getRequestMethod().equalsIgnoreCase("delete")) {
             if (hasSessionId) {
-                this.userMap.remove(sessionId);
+                this.userMessageMap.remove(sessionId);
             }
             response(exchange, "", HttpStatus.HTTP_OK);
         } else if (exchange.getRequestMethod().equalsIgnoreCase("options")) {
@@ -202,4 +204,14 @@ public class ApiHandler implements HttpHandler {
         responseHeaders.add("Set-Cookie", cookie.toString());
     }
 
+    private void resetUserLifeTime(String key) {
+        ScheduledFuture<?> future = autoRemoveUserMap.get(key);
+        if (future != null && !future.isDone()) {
+            future.cancel(false);
+        }
+        autoRemoveUserMap.put(key, executorService.schedule(() -> {
+            autoRemoveUserMap.remove(key);
+            userMessageMap.remove(key);
+        }, 30, TimeUnit.MINUTES));
+    }
 }
