@@ -1,4 +1,4 @@
-package lk.eternal.ai.service;
+package lk.eternal.ai.model.ai;
 
 import lk.eternal.ai.dto.req.GeminiReq;
 import lk.eternal.ai.dto.req.Message;

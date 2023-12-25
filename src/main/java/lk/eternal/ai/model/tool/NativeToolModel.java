@@ -1,4 +1,4 @@
-package lk.eternal.ai.model;
+package lk.eternal.ai.model.tool;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;

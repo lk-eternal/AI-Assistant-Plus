@@ -1,10 +1,10 @@
-package lk.eternal.ai.model;
+package lk.eternal.ai.model.tool;
 
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.dto.resp.ChatResp;
 import lk.eternal.ai.dto.resp.GPTResp;
 import lk.eternal.ai.exception.GPTException;
-import lk.eternal.ai.service.AiModel;
+import lk.eternal.ai.model.ai.AiModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

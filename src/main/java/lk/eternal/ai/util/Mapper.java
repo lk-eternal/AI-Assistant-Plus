@@ -34,7 +34,7 @@ public class Mapper {
         try {
             return OBJECT_MAPPER.readValue(json, reference);
         } catch (IOException e) {
-            LOGGER.error("jackson mapper read value error", e);
+            LOGGER.error("jackson mapper read value error: {}", json, e);
             return null;
         }
     }
@@ -43,7 +43,7 @@ public class Mapper {
         try {
             return OBJECT_MAPPER.readValue(json, clazz);
         } catch (IOException e) {
-            LOGGER.error("jackson mapper read value error", e);
+            LOGGER.error("jackson mapper read value error: {}", json, e);
             return null;
         }
     }
@@ -52,7 +52,7 @@ public class Mapper {
         try {
             return OBJECT_MAPPER.writeValueAsString(data);
         } catch (IOException e) {
-            LOGGER.error("jackson mapper write as string error {}", data, e);
+            LOGGER.error("jackson mapper write as string error: {}", data, e);
             return null;
         }
     }

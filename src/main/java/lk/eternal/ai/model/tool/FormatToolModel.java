@@ -1,4 +1,4 @@
-package lk.eternal.ai.model;
+package lk.eternal.ai.model.tool;
 
 
 import lk.eternal.ai.dto.req.Message;

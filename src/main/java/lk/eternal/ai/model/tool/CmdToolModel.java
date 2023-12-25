@@ -1,10 +1,8 @@
-package lk.eternal.ai.model;
+package lk.eternal.ai.model.tool;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.dto.req.Tool;
 import lk.eternal.ai.plugin.Plugin;
-import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -144,18 +144,39 @@ document.addEventListener('DOMContentLoaded', function() {
         if (response.ok) {
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
+            const delimiter = '[PACKAGE_END]'
 
             let data = '';
+            let textValue = '';
             while (true) {
                 const { done, value } = await reader.read();
                 respDiv.classList.remove('loading');
                 if (done) {
                     break;
                 }
-                let packets = decoder.decode(value).split('\n');
-                for (let i = 0; i < packets.length - 1; i++) {
+                textValue += decoder.decode(value);
+                if(!textValue.includes(delimiter)){
+                    continue;
+                }
+                let packets = textValue.split(delimiter);
+                let packetSize;
+                if(textValue.endsWith(delimiter)){
+                    packetSize = packets.length;
+                    textValue = '';
+                }else{
+                    packetSize = packets.length - 1;
+                    textValue = packets[packets.length - 1];
+                }
+
+                for (let i = 0; i < packetSize - 1; i++) {
                     const packet = packets[i];
-                    let resp = JSON.parse(packet);
+                    let resp;
+                    try{
+                        resp = JSON.parse(packet);
+                    }catch(error){
+                        console.error('JSON parse error: ' + packet);
+                        resp = {status:'ERROR', message:error};
+                    }
 
                     let content;
                     switch(resp.status){
@@ -173,7 +194,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             break;
                     }
 
-                    respDiv.innerHTML = marked.parse(content);
+                    try{
+                        respDiv.innerHTML = marked.parse(content);
+                    }catch(error){
+                        console.error('marked parse error: ' + content);
+                        continue;
+                    }
 
                     respDiv.querySelectorAll('pre code').forEach((el) => {
                         hljs.highlightElement(el);

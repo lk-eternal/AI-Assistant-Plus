@@ -1,4 +1,4 @@
-package lk.eternal.ai.service;
+package lk.eternal.ai.model.ai;
 
 import com.alibaba.dashscope.aigc.generation.Generation;
 import com.alibaba.dashscope.aigc.generation.GenerationResult;

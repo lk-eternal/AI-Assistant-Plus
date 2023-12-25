@@ -4,10 +4,17 @@
         <Console name="CONSOLE" target="SYSTEM_OUT">
             <PatternLayout charset="UTF-8" pattern="[%-5p] %d %c - %m%n" />
         </Console>
+        <RollingFile name="FILE" fileName="logs/log.txt" filePattern="logs/log-%d{yyyy-MM-dd}.txt">
+            <PatternLayout charset="UTF-8" pattern="[%-5p] %d %c - %m%n" />
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+            </Policies>
+        </RollingFile>
     </Appenders>
     <Loggers>
         <root level="trace">
             <AppenderRef ref="CONSOLE" />
+            <AppenderRef ref="FILE" />
         </root>
     </Loggers>
 </configuration>

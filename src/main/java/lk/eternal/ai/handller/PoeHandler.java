@@ -1,43 +1,32 @@
 package lk.eternal.ai.handller;
 
 import cn.hutool.http.HttpStatus;
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.dto.req.PoeReq;
 import lk.eternal.ai.dto.resp.PoeEventResp;
-import lk.eternal.ai.model.NoneToolModel;
-import lk.eternal.ai.plugin.*;
-import lk.eternal.ai.service.AiModel;
-import lk.eternal.ai.service.ChatGPTAiModel;
+import lk.eternal.ai.model.ai.AiModel;
+import lk.eternal.ai.model.ai.ChatGPTAiModel;
+import lk.eternal.ai.model.tool.NoneToolModel;
 import lk.eternal.ai.util.Mapper;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.HttpCookie;
-import java.util.Collections;
 import java.util.LinkedList;
 
 public class PoeHandler implements HttpHandler {
 
     private final NoneToolModel toolModel;
     private final AiModel aiModel;
+    private final String token;
 
     public PoeHandler() {
         final var openaiApiUrl = System.getProperty("openai.url");
         final var openaiApiKey = System.getProperty("openai.key");
-
         aiModel = new ChatGPTAiModel(openaiApiKey, openaiApiUrl, "gpt3.5", "gpt-3.5-turbo-1106");
-
-        final var calcPlugin = new CalcPlugin();
-        final var dbPlugin = new DbPlugin();
-        final var httpPlugin = new HttpPlugin();
-        final var googleSearchPlugin = new GoogleSearchPlugin(System.getProperty("google.key"), System.getProperty("google.search.cx"));
-        final var sshPlugin = new SshPlugin(System.getProperty("ssh.username"), System.getProperty("ssh.password"), System.getProperty("ssh.host"), Integer.parseInt(System.getProperty("ssh.port")));
-        final var cmdPlugin = new CmdPlugin();
-
         toolModel = new NoneToolModel();
+        token = System.getProperty("poe.token");
     }
 
     @Override
@@ -47,7 +36,7 @@ public class PoeHandler implements HttpHandler {
         t.getResponseHeaders().add("Access-Control-Allow-Methods", "*");
 
         if (t.getRequestMethod().equalsIgnoreCase("post")) {
-            if (!t.getRequestHeaders().get("Authorization").get(0).equals("Bearer 9MysciIb47UlziEmENDVn8HpLz9Wnjvu")) {
+            if (!t.getRequestHeaders().get("Authorization").get(0).equals("Bearer " + token)) {
                 response(t, "无效请求", HttpStatus.HTTP_UNAUTHORIZED);
                 return;
             }
@@ -102,21 +91,4 @@ public class PoeHandler implements HttpHandler {
         os.write(message.getBytes());
         os.close();
     }
-
-    private String getSessionIdFromCookie(Headers requestHeaders) {
-        return requestHeaders.getOrDefault("Cookie", Collections.emptyList())
-                .stream()
-                .flatMap(cookie -> HttpCookie.parse(cookie).stream())
-                .filter(cookie -> cookie.getName().equals("sessionId"))
-                .map(HttpCookie::getValue)
-                .findFirst()
-                .orElse(null);
-    }
-
-    private void setSessionIdInCookie(Headers responseHeaders, String sessionId) {
-        HttpCookie cookie = new HttpCookie("sessionId", sessionId);
-        cookie.setPath("/");
-        responseHeaders.add("Set-Cookie", cookie.toString());
-    }
-
 }
