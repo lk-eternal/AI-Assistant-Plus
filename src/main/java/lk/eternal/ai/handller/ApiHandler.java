@@ -87,9 +87,6 @@ public class ApiHandler implements HttpHandler {
             return;
         }
 
-        var sessionId = this.getSessionIdFromCookie(exchange.getRequestHeaders());
-        final var hasSessionId = sessionId != null;
-
         if (exchange.getRequestMethod().equalsIgnoreCase("post")) {
             final var req = new String(exchange.getRequestBody().readAllBytes());
             LOGGER.info(req);
@@ -99,7 +96,8 @@ public class ApiHandler implements HttpHandler {
                 return;
             }
 
-            if (!hasSessionId) {
+            var sessionId = this.getSessionIdFromCookie(exchange.getRequestHeaders());
+            if (sessionId == null) {
                 sessionId = UUID.randomUUID().toString();
                 this.setSessionIdInCookie(exchange.getResponseHeaders(), sessionId);
             }
@@ -137,12 +135,13 @@ public class ApiHandler implements HttpHandler {
                         os.flush();
                     }
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    LOGGER.error("write resp error: {}", e.getMessage(), e);
                 }
             });
             os.close();
         } else if (exchange.getRequestMethod().equalsIgnoreCase("delete")) {
-            if (hasSessionId) {
+            var sessionId = this.getSessionIdFromCookie(exchange.getRequestHeaders());
+            if (sessionId != null) {
                 removeUser(sessionId);
             }
             response(exchange, "", HttpStatus.HTTP_OK);
