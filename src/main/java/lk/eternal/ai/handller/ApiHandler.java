@@ -116,7 +116,7 @@ public class ApiHandler implements HttpHandler {
                 response(exchange, "邀请码不正确", HttpStatus.HTTP_UNAUTHORIZED);
                 return;
             }
-            if (aiModelName.equals("tyqw") && toolModelName.equals("native")) {
+            if (toolModelName.equals("native") && !aiModelName.equals("gpt3.5") && !aiModelName.equals("gpt4")) {
                 response(exchange, "通义千问不支持官方原生工具", HttpStatus.HTTP_BAD_REQUEST);
                 return;
             }
@@ -143,7 +143,7 @@ public class ApiHandler implements HttpHandler {
             os.close();
         } else if (exchange.getRequestMethod().equalsIgnoreCase("delete")) {
             if (hasSessionId) {
-                this.userMessageMap.remove(sessionId);
+                removeUser(sessionId);
             }
             response(exchange, "", HttpStatus.HTTP_OK);
         } else if (exchange.getRequestMethod().equalsIgnoreCase("options")) {
@@ -213,5 +213,13 @@ public class ApiHandler implements HttpHandler {
             autoRemoveUserMap.remove(key);
             userMessageMap.remove(key);
         }, 30, TimeUnit.MINUTES));
+    }
+
+    private void removeUser(String key) {
+        this.userMessageMap.remove(key);
+        final ScheduledFuture<?> future = this.autoRemoveUserMap.remove(key);
+        if (future != null && !future.isDone()) {
+            future.cancel(false);
+        }
     }
 }
