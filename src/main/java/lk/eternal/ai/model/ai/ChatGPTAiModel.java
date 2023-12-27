@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 
 public class ChatGPTAiModel implements AiModel {
@@ -59,7 +60,7 @@ public class ChatGPTAiModel implements AiModel {
     }
 
     @Override
-    public void request(String prompt, List<Message> messages, List<String> stop, List<Tool> tools, Consumer<GPTResp> respConsumer) throws GPTException {
+    public void request(String prompt, List<Message> messages, List<String> stop, List<Tool> tools, Supplier<Boolean> stopCheck, Consumer<GPTResp> respConsumer) throws GPTException {
         final var requestMessages = new LinkedList<>(messages);
         if (prompt != null) {
             requestMessages.addFirst(Message.create("system", prompt, false));
@@ -80,22 +81,22 @@ public class ChatGPTAiModel implements AiModel {
             response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
 
             // 读取返回的流式数据
-            BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.isBlank()) {
-                    continue;
+            try(BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()))){
+                String line;
+                while (!stopCheck.get() && (line = reader.readLine()) != null) {
+                    if (line.isBlank()) {
+                        continue;
+                    }
+                    final var gptResp = Mapper.readValueNotError(line.substring(line.indexOf("{")), GPTResp.class);
+                    if (gptResp == null) {
+                        continue;
+                    }
+                    if (gptResp.choices().get(0).getFinish_reason() != null) {
+                        break;
+                    }
+                    respConsumer.accept(gptResp);
                 }
-                final var gptResp = Mapper.readValueNotError(line.substring(line.indexOf("{")), GPTResp.class);
-                if (gptResp == null) {
-                    continue;
-                }
-                if (gptResp.choices().get(0).getFinish_reason() != null) {
-                    break;
-                }
-                respConsumer.accept(gptResp);
             }
-
         } catch (IOException | InterruptedException e) {
             LOGGER.error("请求OpenAI失败: {}", e.getMessage(), e);
             throw new GPTException("请求OpenAI失败: " + e.getMessage());

@@ -25,7 +25,7 @@ public class Application {
         initProperties(args);
         initProxy();
 
-        HttpServer server = HttpServer.create(new InetSocketAddress(80), 0);
+        HttpServer server = HttpServer.create(new InetSocketAddress(Integer.parseInt(System.getProperty("port"))), 0);
         server.createContext("/api", new ApiHandler());
         server.createContext("/poe", new PoeHandler());
         server.createContext("/", new ResourceHandler("static"));

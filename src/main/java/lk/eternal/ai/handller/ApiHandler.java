@@ -4,6 +4,7 @@ import cn.hutool.http.HttpStatus;
 import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import lk.eternal.ai.domain.User;
 import lk.eternal.ai.dto.req.AppReq;
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.model.ai.AiModel;
@@ -32,7 +33,7 @@ public class ApiHandler implements HttpHandler {
 
     private final String[] allowedOrigins;
 
-    private final Map<String, LinkedList<Message>> userMessageMap = new ConcurrentHashMap<>();
+    private final Map<String, User> userMap = new ConcurrentHashMap<>();
 
     private final ConcurrentHashMap<String, ScheduledFuture<?>> autoRemoveUserMap = new ConcurrentHashMap<>();
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
@@ -102,43 +103,60 @@ public class ApiHandler implements HttpHandler {
                 this.setSessionIdInCookie(exchange.getResponseHeaders(), sessionId);
             }
             resetUserLifeTime(sessionId);
-            final var messages = this.userMessageMap.computeIfAbsent(sessionId, k -> new LinkedList<>());
-
-            final var aiModelName = Optional.ofNullable(appReq.aiModel())
-                    .filter(this.aiModelMap::containsKey)
-                    .orElse("tyqw");
-            final var toolModelName = Optional.ofNullable(appReq.toolModel())
-                    .filter(this.toolModelMap::containsKey)
-                    .orElse("none");
-            if (aiModelName.equals("gpt4") && !"lk123".equals(appReq.gpt4Code())) {
-                response(exchange, "邀请码不正确", HttpStatus.HTTP_UNAUTHORIZED);
-                return;
-            }
-            if (toolModelName.equals("native") && !aiModelName.equals("gpt3.5") && !aiModelName.equals("gpt4")) {
-                response(exchange, "通义千问不支持官方原生工具", HttpStatus.HTTP_BAD_REQUEST);
-                return;
-            }
-
-            messages.addLast(Message.user(appReq.question()));
 
             exchange.getResponseHeaders().set("Content-Type", "text/event-stream");
             exchange.getResponseHeaders().set("Cache-Control", "no-cache");
             exchange.getResponseHeaders().set("Connection", "keep-alive");
-            exchange.sendResponseHeaders(200, 0);
-            final var os = exchange.getResponseBody();
-            this.toolModelMap.get(toolModelName).question(this.aiModelMap.get(aiModelName), messages, resp -> {
-                try {
-                    final var respStr = Mapper.writeAsStringNotError(resp);
-                    if (respStr != null) {
-                        os.write(respStr.getBytes());
-                        os.write("[PACKAGE_END]".getBytes());
-                        os.flush();
+
+            final var user = this.userMap.computeIfAbsent(sessionId, k -> new User(User.Status.WAITING, new LinkedList<>()));
+            switch (appReq.action()) {
+                case "stop" -> {
+                    if (user.getStatus() == User.Status.TYING) {
+                        user.setStatus(User.Status.STOPPING);
                     }
-                } catch (IOException e) {
-                    LOGGER.error("write resp error: {}", e.getMessage(), e);
+                    response(exchange, "OK", HttpStatus.HTTP_OK);
                 }
-            });
-            os.close();
+                case "question" -> {
+                    if (user.getStatus() != User.Status.WAITING) {
+                        response(exchange, "请等待上次回答完成...", HttpStatus.HTTP_BAD_REQUEST);
+                        return;
+                    }
+                    final var aiModelName = Optional.ofNullable(appReq.aiModel())
+                            .filter(this.aiModelMap::containsKey)
+                            .orElse("tyqw");
+                    final var toolModelName = Optional.ofNullable(appReq.toolModel())
+                            .filter(this.toolModelMap::containsKey)
+                            .orElse("none");
+                    if (aiModelName.equals("gpt4") && !"lk123".equals(appReq.gpt4Code())) {
+                        response(exchange, "邀请码不正确", HttpStatus.HTTP_UNAUTHORIZED);
+                        return;
+                    }
+                    if (toolModelName.equals("native") && !aiModelName.equals("gpt3.5") && !aiModelName.equals("gpt4")) {
+                        response(exchange, "通义千问不支持官方原生工具", HttpStatus.HTTP_BAD_REQUEST);
+                        return;
+                    }
+                    user.setStatus(User.Status.TYING);
+                    user.getMessages().addLast(Message.user(appReq.question()));
+                    exchange.sendResponseHeaders(HttpStatus.HTTP_OK, 0);
+                    final var os = exchange.getResponseBody();
+                    this.toolModelMap.get(toolModelName).question(this.aiModelMap.get(aiModelName), user.getMessages()
+                            , () -> user.getStatus() == User.Status.STOPPING
+                            , resp -> {
+                                try {
+                                    final var respStr = Mapper.writeAsStringNotError(resp);
+                                    if (respStr != null) {
+                                        os.write(respStr.getBytes());
+                                        os.write("[PACKAGE_END]".getBytes());
+                                        os.flush();
+                                    }
+                                } catch (IOException e) {
+                                    LOGGER.error("write resp error: {}", e.getMessage(), e);
+                                }
+                            });
+                    user.setStatus(User.Status.WAITING);
+                    os.close();
+                }
+            }
         } else if (exchange.getRequestMethod().equalsIgnoreCase("delete")) {
             var sessionId = this.getSessionIdFromCookie(exchange.getRequestHeaders());
             if (sessionId != null) {
@@ -210,12 +228,12 @@ public class ApiHandler implements HttpHandler {
         }
         autoRemoveUserMap.put(key, executorService.schedule(() -> {
             autoRemoveUserMap.remove(key);
-            userMessageMap.remove(key);
+            userMap.remove(key);
         }, 30, TimeUnit.MINUTES));
     }
 
     private void removeUser(String key) {
-        this.userMessageMap.remove(key);
+        this.userMap.remove(key);
         final ScheduledFuture<?> future = this.autoRemoveUserMap.remove(key);
         if (future != null && !future.isDone()) {
             future.cancel(false);

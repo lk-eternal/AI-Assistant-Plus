@@ -55,7 +55,7 @@ public class PoeHandler implements HttpHandler {
             t.getResponseHeaders().set("Connection", "keep-alive");
             t.sendResponseHeaders(200, 0);
             OutputStream os = t.getResponseBody();
-            this.toolModel.question(this.aiModel, messages, resp -> {
+            this.toolModel.question(this.aiModel, messages, () -> false, resp -> {
                 try {
                     final var poeEventResp = switch (resp.status()) {
                         case TYPING -> new PoeEventResp("text", new PoeEventResp.TextEvent(resp.message()));

@@ -16,6 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public abstract class BaseToolModel implements ToolModel {
 
@@ -35,13 +36,19 @@ public abstract class BaseToolModel implements ToolModel {
     }
 
     @Override
-    public void question(AiModel aiModel, LinkedList<Message> messages, Consumer<ChatResp> respConsumer) {
+    public void question(AiModel aiModel, LinkedList<Message> messages, Supplier<Boolean> stopCheck, Consumer<ChatResp> respConsumer) {
         LOGGER.info("User: {}", messages.getLast().getContent());
         try {
             String resp;
-            while (true) {
+            while (!stopCheck.get()) {
                 final GPTResp[] respHolder = {null};
-                request(aiModel, messages, getStops(), getTools(), gptResp -> {
+
+                final var prompt = getPrompt();
+                while (messages.size() > MAX_HISTORY) {
+                    messages.removeFirst();
+                    messages.removeFirst();
+                }
+                aiModel.request(prompt, messages, getStops(), getTools(), stopCheck, gptResp -> {
                     if (respHolder[0] == null) {
                         respHolder[0] = gptResp;
                     }
@@ -80,15 +87,6 @@ public abstract class BaseToolModel implements ToolModel {
             messages.removeLast();
             respConsumer.accept(new ChatResp(ChatResp.ChatStatus.ERROR, e.getMessage()));
         }
-    }
-
-    protected void request(AiModel aiModel, LinkedList<Message> messages, List<String> stops, List<Tool> tools, Consumer<GPTResp> respConsumer) throws GPTException {
-        final var prompt = getPrompt();
-        while (messages.size() > MAX_HISTORY) {
-            messages.removeFirst();
-            messages.removeFirst();
-        }
-        aiModel.request(prompt, messages, stops, tools, respConsumer);
     }
 
     protected abstract String getPrompt();

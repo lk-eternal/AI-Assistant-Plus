@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.LinkedList;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class NoneToolModel implements ToolModel {
 
@@ -26,7 +27,7 @@ public class NoneToolModel implements ToolModel {
     }
 
     @Override
-    public void question(AiModel aiModel, LinkedList<Message> messages, Consumer<ChatResp> respConsumer) {
+    public void question(AiModel aiModel, LinkedList<Message> messages, Supplier<Boolean> stopCheck, Consumer<ChatResp> respConsumer) {
         LOGGER.info("User: {}", messages.getLast().getContent());
         while (messages.size() > MAX_HISTORY) {
             messages.removeFirst();
@@ -34,7 +35,7 @@ public class NoneToolModel implements ToolModel {
         }
         try {
             final GPTResp[] respHolder = {null};
-            aiModel.request(null, messages, null, null, resp -> {
+            aiModel.request(null, messages, null, null, stopCheck, resp -> {
                 if (respHolder[0] == null) {
                     respHolder[0] = resp;
                 }

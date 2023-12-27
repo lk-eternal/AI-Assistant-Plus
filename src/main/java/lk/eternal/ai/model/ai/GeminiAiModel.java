@@ -24,6 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class GeminiAiModel implements AiModel {
@@ -56,7 +57,7 @@ public class GeminiAiModel implements AiModel {
     }
 
     @Override
-    public void request(String prompt, List<Message> messages, List<String> stop, List<Tool> tools, Consumer<GPTResp> respConsumer) throws GPTException {
+    public void request(String prompt, List<Message> messages, List<String> stop, List<Tool> tools, Supplier<Boolean> stopCheck, Consumer<GPTResp> respConsumer) throws GPTException {
         final var contents = messages.stream().map(m -> GeminiReq.Content.create(m.getRole(), m.getContent())).collect(Collectors.toList());
         final var requestMessages = new LinkedList<>(contents);
         if (prompt != null) {
@@ -76,36 +77,37 @@ public class GeminiAiModel implements AiModel {
         final HttpResponse<InputStream> response;
         try {
             response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
-            BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()));
-            StringBuilder jsonText = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.isBlank()) {
-                    continue;
-                }
-                if (line.equals(",")) {
-                    jsonText = new StringBuilder();
-                    continue;
-                }
-                if (line.equals("[{")) {
-                    jsonText.append("{");
-                } else {
-                    jsonText.append(line);
-                }
-                if (line.equals("}")) {
-                    final var geminiResp = Mapper.readValueNotError(jsonText.toString(), GeminiResp.class);
-                    if (geminiResp == null) {
-                        throw new RuntimeException("Not response");
+            try(BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()))){
+                StringBuilder jsonText = new StringBuilder();
+                String line;
+                while (!stopCheck.get() && (line = reader.readLine()) != null) {
+                    if (line.isBlank()) {
+                        continue;
                     }
-                    if (geminiResp.getError() != null) {
-                        throw new RuntimeException(geminiResp.getError().getMessage());
+                    if (line.equals(",")) {
+                        jsonText = new StringBuilder();
+                        continue;
                     }
-                    respConsumer.accept(new GPTResp(null, null, System.currentTimeMillis(), "gemini"
-                            , Optional.ofNullable(geminiResp).map(GeminiResp::getCandidates).orElseGet(Collections::emptyList)
-                            .stream()
-                            .map(c -> new GPTResp.Choice(1, null, new lk.eternal.ai.dto.req.Message(c.getContent().getRole(), c.getContent().getParts().stream().map(GeminiResp.Part::getText).collect(Collectors.joining()), null, null, null, null), c.getFinishReason()))
-                            .collect(Collectors.toList())
-                            , null, null, null));
+                    if (line.equals("[{")) {
+                        jsonText.append("{");
+                    } else {
+                        jsonText.append(line);
+                    }
+                    if (line.equals("}")) {
+                        final var geminiResp = Mapper.readValueNotError(jsonText.toString(), GeminiResp.class);
+                        if (geminiResp == null) {
+                            throw new RuntimeException("Not response");
+                        }
+                        if (geminiResp.getError() != null) {
+                            throw new RuntimeException(geminiResp.getError().getMessage());
+                        }
+                        respConsumer.accept(new GPTResp(null, null, System.currentTimeMillis(), "gemini"
+                                , Optional.ofNullable(geminiResp.getCandidates()).orElseGet(Collections::emptyList)
+                                .stream()
+                                .map(c -> new GPTResp.Choice(1, null, new lk.eternal.ai.dto.req.Message(c.getContent().getRole(), c.getContent().getParts().stream().map(GeminiResp.Part::getText).collect(Collectors.joining()), null, null, null, null), c.getFinishReason()))
+                                .collect(Collectors.toList())
+                                , null, null, null));
+                    }
                 }
             }
         } catch (Exception e) {

@@ -111,7 +111,6 @@ button:hover {
     #chatBox > div {
         padding: 1.5vw;
         margin: 1vw 0;
-        max-width: unset;
     }
 }
 
@@ -134,6 +133,7 @@ button:hover {
     box-shadow: 2px 2px 5px black;
     overflow: auto;
     margin: 5px;
+    font-size: larger;
 }
 
 #chatBox > div p{
@@ -159,7 +159,8 @@ button:hover {
 
 @media (max-width: 1000px) and (min-height: 800px) {
     #chatBox > div pre {
-        line-height: 2vw;
+        line-height: 4vw;
+        font-size: small;
     }
 }
 
@@ -189,7 +190,6 @@ button:hover {
 }
 
 div .copy-button {
-    width: 10%;
     height: 3vh;
     font-size: 0.75em;
     position: absolute;
@@ -206,7 +206,23 @@ div .copy-button {
 @media (max-width: 1000px) and (min-height: 800px) {
     div .copy-button {
         height: 6vw;
+        width: 11vw;
+        white-space: nowrap;
     }
+}
+
+#chatBox > #stopBtn {
+    display: none;
+    position: relative;
+    bottom: 0;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ccc;
+    border-radius: 1vh;
+    margin: 0 1vh 0 0;
+    width: fit-content;
+    height: fit-content;
 }
 
 .toolBox {
