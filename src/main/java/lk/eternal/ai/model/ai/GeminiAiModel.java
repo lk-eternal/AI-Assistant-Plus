@@ -77,7 +77,7 @@ public class GeminiAiModel implements AiModel {
         final HttpResponse<InputStream> response;
         try {
             response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
-            try(BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()))){
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()))) {
                 StringBuilder jsonText = new StringBuilder();
                 String line;
                 while (!stopCheck.get() && (line = reader.readLine()) != null) {

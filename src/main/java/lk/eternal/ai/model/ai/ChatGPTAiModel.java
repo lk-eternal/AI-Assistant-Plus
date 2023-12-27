@@ -81,7 +81,7 @@ public class ChatGPTAiModel implements AiModel {
             response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
 
             // 读取返回的流式数据
-            try(BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()))){
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()))) {
                 String line;
                 while (!stopCheck.get() && (line = reader.readLine()) != null) {
                     if (line.isBlank()) {

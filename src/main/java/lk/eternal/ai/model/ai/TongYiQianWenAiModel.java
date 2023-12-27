@@ -34,7 +34,7 @@ public class TongYiQianWenAiModel implements AiModel {
     @Override
     public void request(String prompt, List<lk.eternal.ai.dto.req.Message> messages, List<String> stop, List<Tool> tools, Supplier<Boolean> stopCheck, Consumer<GPTResp> respConsumer) throws GPTException {
         MessageManager msgManager = new MessageManager(10);
-        if(prompt != null){
+        if (prompt != null) {
             msgManager.add(Message.builder().role(Role.SYSTEM.getValue()).content(prompt).build());
         }
         final List<Message> msgs = messages.stream().map(m -> Message.builder().role(m.getRole()).content(m.getContent()).build()).collect(Collectors.toList());
@@ -49,7 +49,7 @@ public class TongYiQianWenAiModel implements AiModel {
         try {
             Flowable<GenerationResult> result = gen.streamCall(param);
             result.blockingForEach(message -> {
-                if(stopCheck.get()){
+                if (stopCheck.get()) {
                     throw new RuntimeException("用户停止");
                 }
                 respConsumer.accept(new GPTResp(message.getRequestId(), null, System.currentTimeMillis(), "tyqw"
@@ -61,7 +61,7 @@ public class TongYiQianWenAiModel implements AiModel {
                         , null, null));
             });
         } catch (Exception e) {
-            if(!e.getMessage().equals("用户停止")){
+            if (!e.getMessage().equals("用户停止")) {
                 throw new GPTException(e.getMessage());
             }
         }
