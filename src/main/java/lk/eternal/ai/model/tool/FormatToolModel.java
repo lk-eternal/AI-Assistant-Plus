@@ -81,7 +81,7 @@ public class FormatToolModel extends BaseToolModel {
     }
 
     @Override
-    protected String getPrompt() {
+    public String getPrompt() {
         return this.prompt;
     }
 

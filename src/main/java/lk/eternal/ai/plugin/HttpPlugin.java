@@ -34,7 +34,7 @@ public class HttpPlugin implements Plugin {
 
     @Override
     public String description() {
-        return "访问对应网址的工具,参数是网址.请求成功会返回整个网页文本内容,请求失败会返回错误码,从中提取需要的信息.因此你获得了获取实时网页信息的能力,当且仅当用户需要查询实时信息时使用本工具.";
+        return "A web page access tool that retrieves the full text content of a webpage by sending a request to a specified URL. If the request fails, an error code is returned instead. With this tool, you can obtain real-time information from web pages and extract the necessary information from it. Note: Use this tool only when the user needs to query real-time information.";
     }
 
     @Override

@@ -46,7 +46,7 @@ public class GoogleSearchPlugin implements Plugin {
 
     @Override
     public String description() {
-        return "(注意:仅当在用户的问题中包含实时性的内容比如出现'查查','搜索','时间'和'最新'等关键字时使用本工具.)基于谷歌API的搜索引擎,参数是搜索内容,返回相关内容网页的标题,简介和链接";
+        return "A search engine plugin based on Google API. When the user's question contains real-time content, it uses Google's powerful search capabilities to retrieve relevant information and return the title, summary, and link of the related web page. The plug-in can be used to query news, academic articles, technical documents, and other types of information to help users quickly find the content they need. Note: Use this tool only when the user's question contains real-time content. It is recommended to use English for searching.";
     }
 
     @Override

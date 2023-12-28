@@ -15,7 +15,7 @@ public class CalcPlugin implements Plugin {
 
     @Override
     public String description() {
-        return "数学计算的工具,参数是数学表达式,本工具实际计算使用的是hutool库的Calculator类的conversion方法,请构造出合适的表达式.";
+        return "A tool for performing mathematical calculations. This tool uses the conversion method of the Calculator class in the hutool library to perform actual calculations and execute corresponding calculation tasks by receiving mathematical expressions from users. When using this tool, please ensure that your input is a valid mathematical expression to obtain the correct result.";
     }
 
     @Override

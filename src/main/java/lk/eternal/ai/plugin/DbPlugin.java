@@ -31,7 +31,7 @@ public class DbPlugin implements Plugin {
 
     @Override
     public String description() {
-        return "执行数据库的工具(默认已经连接上数据库),参数是需要执行的sql语句,数据库类型是Postgresql";
+        return "A tool for executing database operations. This tool is already connected to a specified Postgresql database and can execute corresponding database operations by receiving SQL statements from users. With this tool, you can easily complete various database query and operation tasks.";
     }
 
     @Override

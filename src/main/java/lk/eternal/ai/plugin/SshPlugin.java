@@ -38,7 +38,7 @@ public class SshPlugin implements Plugin {
 
     @Override
     public String description() {
-        return "执行shell命令的工具,参数是执行命令,机器环境是linux(服务器),禁止执行对系统安全有威胁的命令";
+        return "A tool for executing shell commands. This tool can run in a Linux environment and execute corresponding operations by receiving commands from users. When using this tool, please do not enter any commands that may pose a threat to system security.";
     }
 
     @Override

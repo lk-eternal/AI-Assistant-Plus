@@ -107,8 +107,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function clearMessages() {
-        fetch('/api', {
-            method: 'DELETE'
+        fetch('/api/clear', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8'
+            },
         }).then(() => {
             let divs = chatBox.getElementsByTagName('div');
             for (let i = divs.length - 1; i > 0; i--) {
@@ -146,13 +149,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let gpt4Code = document.getElementById('gpt4Code').value;
 
-        fetch('/api', {
+        fetch('/api/question', {
             method: 'POST',
             headers: {
-                'Content-Type': 'text/plain'
+                'Content-Type': 'application/json;charset=UTF-8'
             },
             body: JSON.stringify({
-                'action': 'question',
                 'aiModel': aiModel.getAiModelValue(),
                 'toolModel': toolModel.getToolModelValue(),
                 'question': question,
@@ -160,6 +162,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
         }).then(async response => {
             if (!response.ok) {
+                console.log(response)
                 throw new Error(response.status + ':' + response.statusText);
             }
 
@@ -288,12 +291,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function stopMessage() {
         stopReading = true;
-        fetch('/api', {
+        fetch('/api/stop', {
             method: 'POST',
             headers: {
-                'Content-Type': 'text/plain'
-            },
-            body: JSON.stringify({'action': 'stop'})
+                'Content-Type': 'application/json;charset=UTF-8'
+            }
         });
     }
 });

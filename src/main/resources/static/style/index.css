@@ -190,7 +190,6 @@ button:hover {
 }
 
 div .copy-button {
-    height: 3vh;
     font-size: 0.75em;
     position: absolute;
     top: 10px;
@@ -275,6 +274,10 @@ div .copy-button {
 
 #settingBox > div{
     width: 50%;
+}
+
+#settingBox > div > div {
+    padding-top: 2%;
 }
 
 #settingBox p{

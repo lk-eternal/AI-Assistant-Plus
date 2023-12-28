@@ -38,7 +38,7 @@ public class NativeToolModel extends BaseToolModel {
     }
 
     @Override
-    protected String getPrompt() {
+    public String getPrompt() {
         return null;
     }
 

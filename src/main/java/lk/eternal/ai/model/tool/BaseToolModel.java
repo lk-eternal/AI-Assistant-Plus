@@ -5,7 +5,6 @@ import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.dto.req.Tool;
 import lk.eternal.ai.dto.resp.ChatResp;
 import lk.eternal.ai.dto.resp.GPTResp;
-import lk.eternal.ai.exception.GPTException;
 import lk.eternal.ai.plugin.Plugin;
 import lk.eternal.ai.model.ai.AiModel;
 import org.slf4j.Logger;
@@ -89,7 +88,7 @@ public abstract class BaseToolModel implements ToolModel {
         }
     }
 
-    protected abstract String getPrompt();
+    public abstract String getPrompt();
 
     protected abstract List<String> getStops();
 

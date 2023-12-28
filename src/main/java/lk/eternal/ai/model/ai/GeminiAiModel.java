@@ -43,11 +43,9 @@ public class GeminiAiModel implements AiModel {
         HTTP_CLIENT = builder.build();
     }
 
-    private final String url;
     private final String key;
 
-    public GeminiAiModel(String url, String key) {
-        this.url = url;
+    public GeminiAiModel(String key) {
         this.key = key;
     }
 
@@ -69,7 +67,7 @@ public class GeminiAiModel implements AiModel {
                 .orElseThrow(() -> new GPTException("req can not be null"));
 
         final HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(this.url + ":streamGenerateContent?key=" + this.key))
+                .uri(URI.create("https://generativelanguage.googleapis.com/v1beta/models/" + "gemini-pro" + ":streamGenerateContent?key=" + this.key))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(reqStr))
                 .build();
