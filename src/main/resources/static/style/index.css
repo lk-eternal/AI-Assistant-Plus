@@ -338,6 +338,13 @@ div .copy-button {
     cursor: pointer;
 }
 
+@media (max-width: 1000px) and (min-height: 800px) {
+    #closeBtn {
+        top: 4vw;
+        right: 4vw;
+    }
+}
+
 .inputBox {
     display: flex;
     flex-direction: row;
