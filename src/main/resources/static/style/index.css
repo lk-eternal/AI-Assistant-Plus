@@ -279,7 +279,8 @@ div .copy-button {
 
 #settingBox > div {
     overflow-y: auto;
-    height: 50vh;
+    height: fit-content;
+    max-height: 50vh;
     width: 100%;
     flex-direction: column;
 }
