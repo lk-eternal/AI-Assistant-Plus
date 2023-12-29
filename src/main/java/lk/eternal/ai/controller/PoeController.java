@@ -36,7 +36,7 @@ public class PoeController {
 
     public PoeController(@Value("${openai.url}") String openaiApiUrl
             , @Value("${openai.key}") String openaiApiKey
-            , @Value("${openai.key}") String poeToken) {
+            , @Value("${poe.token}") String poeToken) {
         aiModel = new ChatGPTAiModel(openaiApiKey, openaiApiUrl, "gpt3.5", "gpt-3.5-turbo-1106");
         toolModel = new NoneToolModel();
         token = poeToken;
