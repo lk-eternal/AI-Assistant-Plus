@@ -4,29 +4,29 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lk.eternal.ai.domain.User;
-import lk.eternal.ai.dto.req.AppReq;
+import lk.eternal.ai.dto.req.QuestionReq;
 import lk.eternal.ai.dto.req.Message;
+import lk.eternal.ai.dto.resp.PluginResp;
 import lk.eternal.ai.exception.ApiUnauthorizedException;
 import lk.eternal.ai.exception.ApiValidationException;
 import lk.eternal.ai.model.ai.AiModel;
 import lk.eternal.ai.model.ai.ChatGPTAiModel;
 import lk.eternal.ai.model.ai.GeminiAiModel;
 import lk.eternal.ai.model.ai.TongYiQianWenAiModel;
-import lk.eternal.ai.model.tool.*;
-import lk.eternal.ai.plugin.CalcPlugin;
-import lk.eternal.ai.plugin.GoogleSearchPlugin;
-import lk.eternal.ai.plugin.HttpPlugin;
-import lk.eternal.ai.plugin.Plugin;
+import lk.eternal.ai.model.plugin.*;
+import lk.eternal.ai.plugin.*;
 import lk.eternal.ai.util.Assert;
 import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.net.ProxySelector;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -41,85 +41,48 @@ public class LKController {
     private final ConcurrentHashMap<String, ScheduledFuture<?>> autoRemoveUserMap = new ConcurrentHashMap<>();
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
 
-    private final Map<String, ToolModel> toolModelMap = new HashMap<>();
+    private final Map<String, Plugin> pluginsMap = new HashMap<>();
+    private final Map<String, PluginModel> pluginModelMap = new HashMap<>();
     private final Map<String, AiModel> aiModelMap = new HashMap<>();
 
-    public LKController(@Value("${openai.url}") String openaiApiUrl
-            , @Value("${openai.key}") String openaiApiKey
-            , @Value("${tyqw.key}") String tyqwApiKey
-            , @Value("${google.gemini.key}") String geminiApiKey
-            , @Value("${google.search.key}") String googleSearchKey
-            , @Value("${google.search.cx}") String googleSearchCx
-            , @Value("${ssh.username}") String sshUsername
-            , @Value("${ssh.password}") String sshPassword
-            , @Value("${ssh.host}") String sshHost
-            , @Value("${ssh.port}") Integer sshPort
-    ) {
-        final var chatGPT35Service = new ChatGPTAiModel(openaiApiKey, openaiApiUrl, "gpt3.5", "gpt-3.5-turbo-1106");
-        final var chatGPT4Service = new ChatGPTAiModel(openaiApiKey, openaiApiUrl, "gpt4", "gpt-4-1106-preview");
-        final var tyqwService = new TongYiQianWenAiModel(tyqwApiKey);
-        final var geminiService = new GeminiAiModel(geminiApiKey);
-        this.aiModelMap.put(chatGPT35Service.getName(), chatGPT35Service);
-        this.aiModelMap.put(chatGPT4Service.getName(), chatGPT4Service);
-        this.aiModelMap.put(tyqwService.getName(), tyqwService);
-        this.aiModelMap.put(geminiService.getName(), geminiService);
-
-        final var plugins = new ArrayList<Plugin>();
-        plugins.add(new CalcPlugin());
-        plugins.add(new HttpPlugin());
-        plugins.add(new GoogleSearchPlugin(googleSearchKey, googleSearchCx));
-//        plugins.add(new DbPlugin());
-//        plugins.add(new SshPlugin(sshUsername, sshPassword, sshHost, sshPort));
-//        plugins.add(new CmdPlugin());
-
-        BaseToolModel toolModel = new NativeToolModel();
-        plugins.forEach(toolModel::addPlugin);
-        this.toolModelMap.put(toolModel.getName(), toolModel);
-
-        BaseToolModel cmdPluginModel = new CmdToolModel();
-        plugins.forEach(cmdPluginModel::addPlugin);
-        this.toolModelMap.put(cmdPluginModel.getName(), cmdPluginModel);
-
-        BaseToolModel formatPluginModel = new FormatToolModel();
-        plugins.forEach(formatPluginModel::addPlugin);
-        this.toolModelMap.put(formatPluginModel.getName(), formatPluginModel);
-
-        NoneToolModel noneModel = new NoneToolModel();
-        this.toolModelMap.put(noneModel.getName(), noneModel);
+    public LKController(List<AiModel> aiModels, List<PluginModel> pluginModels, List<Plugin> plugins) {
+        aiModels.forEach(aiModel -> this.aiModelMap.put(aiModel.getName(), aiModel));
+        plugins.forEach(plugin -> this.pluginsMap.put(plugin.name(), plugin));
+        pluginModels.forEach(pluginModel -> this.pluginModelMap.put(pluginModel.getName(), pluginModel));
     }
 
     @PostMapping("question")
-    public void question(@RequestBody AppReq appReq, HttpServletRequest request, HttpServletResponse response) throws IOException {
-        Assert.notNull(appReq, "无效请求");
-        LOGGER.info("appReq: {}", Mapper.writeAsStringNotError(appReq));
+    public void question(@RequestBody QuestionReq questionReq, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        Assert.notNull(questionReq, "无效请求");
+        LOGGER.info("questionReq: {}", Mapper.writeAsStringNotError(questionReq));
 
-        var sessionId = getOrCreateSessionId(request);
-        resetUserLifeTime(sessionId);
-
-        response.setContentType(MediaType.TEXT_EVENT_STREAM_VALUE);
-
-        final var user = this.userMap.computeIfAbsent(sessionId, k -> new User(User.Status.WAITING, new LinkedList<>()));
+        var user = getUserOrCreate(request);
         Assert.isTrue(user.getStatus() == User.Status.WAITING, "请等待上次回答完成...");
-        final var aiModelName = Optional.ofNullable(appReq.aiModel())
+
+        final var aiModelName = Optional.ofNullable(user.getAiModel())
                 .filter(this.aiModelMap::containsKey)
                 .orElse("tyqw");
-        final var toolModelName = Optional.ofNullable(appReq.toolModel())
-                .filter(this.toolModelMap::containsKey)
-                .orElse("none");
-
-        if (aiModelName.equals("gpt4") && !"lk123".equals(appReq.gpt4Code())) {
+        if (aiModelName.equals("gpt4") && !"lk123".equals(user.getGpt4Code())) {
             throw new ApiUnauthorizedException("邀请码不正确");
         }
-        if (toolModelName.equals("native") && !aiModelName.equals("gpt3.5") && !aiModelName.equals("gpt4")) {
+
+        final var pluginModelName = Optional.ofNullable(user.getPluginModel())
+                .filter(this.pluginModelMap::containsKey)
+                .orElse("none");
+        if (pluginModelName.equals("native") && !aiModelName.equals("gpt3.5") && !aiModelName.equals("gpt4")) {
             throw new ApiValidationException("通义千问不支持官方原生工具");
         }
         user.setStatus(User.Status.TYING);
-        user.getMessages().addLast(Message.user(appReq.question()));
+        user.getMessages().addLast(Message.user(questionReq.question()));
+
+        response.setContentType(MediaType.TEXT_EVENT_STREAM_VALUE);
         response.setStatus(HttpStatus.OK.value());
         final var os = response.getOutputStream();
-        this.toolModelMap.get(toolModelName).question(this.aiModelMap.get(aiModelName), user.getMessages()
-                , () -> user.getStatus() == User.Status.STOPPING
-                , resp -> {
+        this.pluginModelMap.get(pluginModelName).question(this.aiModelMap.get(aiModelName)
+                , user.getMessages()
+                , user.getPlugins().stream().map(this.pluginsMap::get).filter(Objects::nonNull).toList()
+                , user::getPluginProperties
+                , () -> user.getStatus() == User.Status.STOPPING, resp -> {
                     try {
                         final var respStr = Mapper.writeAsStringNotError(resp);
                         if (respStr != null) {
@@ -137,44 +100,79 @@ public class LKController {
 
     @PostMapping("stop")
     public void stop(HttpServletRequest request) throws IOException {
-        var sessionId = getOrCreateSessionId(request);
-        final var user = this.userMap.computeIfAbsent(sessionId, k -> new User(User.Status.WAITING, new LinkedList<>()));
-        if (user.getStatus() == User.Status.TYING) {
+        final var user = getUser(request);
+        if (user != null && user.getStatus() == User.Status.TYING) {
             user.setStatus(User.Status.STOPPING);
         }
     }
 
     @DeleteMapping("clear")
     public void clear(HttpServletRequest request) throws IOException {
-        var sessionId = getOrCreateSessionId(request);
-        if (sessionId != null) {
-            removeUser(sessionId);
+        final var user = getUser(request);
+        if (user != null) {
+            user.clear();
         }
     }
 
-    private String getOrCreateSessionId(HttpServletRequest request) {
+    @PostMapping("exit")
+    public void exit(HttpServletRequest request) throws IOException {
+        final var user = getUser(request);
+        if (user != null) {
+            removeUser(user.getId());
+        }
+    }
+
+
+    @PutMapping("properties")
+    public void properties(@RequestBody Map<String, Object> properties, HttpServletRequest request){
+        var user = getUserOrCreate(request);
+        properties.forEach(user::putProperty);
+    }
+
+    @GetMapping("plugins")
+    public List<PluginResp> plugins(){
+        return pluginsMap.values().stream()
+                .sorted(Comparator.comparing(Plugin::description))
+                .map(p -> new PluginResp(p.name(), p.description(), p.properties()))
+                .toList();
+    }
+
+    private User getUser(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session == null) {
-            session = request.getSession();
+            return null;
         }
-        session.setMaxInactiveInterval(30 * 60);
-        return session.getId();
+        return this.userMap.get(session.getId());
     }
 
-    private void resetUserLifeTime(String key) {
-        ScheduledFuture<?> future = autoRemoveUserMap.get(key);
+    private User getUserOrCreate(HttpServletRequest request) {
+        final var user = Optional.ofNullable(getUser(request))
+                .orElseGet(() -> {
+                    final var session = request.getSession();
+                    session.setMaxInactiveInterval(30 * 60);
+                    final var sessionId = session.getId();
+                    final var u = new User(sessionId);
+                    this.userMap.put(sessionId, u);
+                    return u;
+                });
+        resetUserLifeTime(user.getId());
+        return user;
+    }
+
+    private void resetUserLifeTime(String sessionId) {
+        ScheduledFuture<?> future = autoRemoveUserMap.get(sessionId);
         if (future != null && !future.isDone()) {
             future.cancel(false);
         }
-        autoRemoveUserMap.put(key, executorService.schedule(() -> {
-            autoRemoveUserMap.remove(key);
-            userMap.remove(key);
+        autoRemoveUserMap.put(sessionId, executorService.schedule(() -> {
+            autoRemoveUserMap.remove(sessionId);
+            userMap.remove(sessionId);
         }, 30, TimeUnit.MINUTES));
     }
 
-    private void removeUser(String key) {
-        this.userMap.remove(key);
-        final ScheduledFuture<?> future = this.autoRemoveUserMap.remove(key);
+    private void removeUser(String sessionId) {
+        this.userMap.remove(sessionId);
+        final ScheduledFuture<?> future = this.autoRemoveUserMap.remove(sessionId);
         if (future != null && !future.isDone()) {
             future.cancel(false);
         }

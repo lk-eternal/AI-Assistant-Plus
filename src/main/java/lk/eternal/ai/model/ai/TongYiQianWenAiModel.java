@@ -11,17 +11,20 @@ import io.reactivex.Flowable;
 import lk.eternal.ai.dto.req.Tool;
 import lk.eternal.ai.dto.resp.GPTResp;
 import lk.eternal.ai.exception.GPTException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+@Component
 public class TongYiQianWenAiModel implements AiModel {
 
     private final Generation gen;
 
-    public TongYiQianWenAiModel(String tyqwApiKey) {
+    public TongYiQianWenAiModel(@Value("${tyqw.key}") String tyqwApiKey) {
         Constants.apiKey = tyqwApiKey;
         gen = new Generation();
     }

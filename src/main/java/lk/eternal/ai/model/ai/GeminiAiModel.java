@@ -9,6 +9,8 @@ import lk.eternal.ai.exception.GPTException;
 import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -27,26 +29,21 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+@Component
 public class GeminiAiModel implements AiModel {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GeminiAiModel.class);
 
-    private final static HttpClient HTTP_CLIENT;
+    private final HttpClient HTTP_CLIENT;
 
-    static {
-        final var builder = HttpClient.newBuilder()
+    @Value("${google.gemini.key}")
+    private String key;
+
+    public GeminiAiModel(ProxySelector proxySelector) {
+        HTTP_CLIENT = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
-                .connectTimeout(Duration.ofMinutes(1));
-        if (ProxySelector.getDefault() != null) {
-            builder.proxy(ProxySelector.getDefault());
-        }
-        HTTP_CLIENT = builder.build();
-    }
-
-    private final String key;
-
-    public GeminiAiModel(String key) {
-        this.key = key;
+                .connectTimeout(Duration.ofMinutes(1))
+                .proxy(proxySelector).build();
     }
 
     @Override

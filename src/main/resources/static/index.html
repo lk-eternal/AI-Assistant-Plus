@@ -85,52 +85,60 @@
             </svg>
 
             <div>
-                <h2>语言模型</h2>
-                <div>
-                    <input id="tyqw" type="radio" name="ai-model" value="tyqw" checked>
-                    <label for="tyqw">通义千问</label>
+                <div name="aiModel">
+                    <h2>语言模型</h2>
+                    <div>
+                        <input id="tyqw" class="config" type="radio" name="aiModel" value="tyqw" checked>
+                        <label for="tyqw">通义千问</label>
+                    </div>
+
+                    <div>
+                        <input id="gemini" class="config" type="radio" name="aiModel" value="gemini">
+                        <label for="gemini">Gemini</label>
+                    </div>
+
+                    <div>
+                        <input id="gpt3.5" class="config" type="radio" name="aiModel" value="gpt3.5">
+                        <label for="gpt3.5">GPT 3.5</label>
+                    </div>
+
+                    <div>
+                        <input id="gpt4" class="config" type="radio" name="aiModel" value="gpt4">
+                        <label for="gpt4">GPT 4</label><br>
+                        <div id="gpt4CodeDiv" style="display: none">
+                            <p>目前最强的AI大模型</p>
+                            <p>使用请输入邀请码:<input id="gpt4Code" class="config" name="gpt4Code"></p>
+                            <p>联系作者获取邀请码</p>
+                            <p>微信:LK_eternal</p>
+                        </div>
+                    </div>
                 </div>
 
-                <div>
-                    <input id="gemini" type="radio" name="ai-model" value="gemini">
-                    <label for="gemini">Gemini</label>
+                <div name="pluginModel">
+                    <h2>插件模型</h2>
+                    <div>
+                        <input id="none" class="config" type="radio" name="pluginModel" value="none" checked>
+                        <label for="none">不使用</label>
+                    </div>
+
+                    <div>
+                        <input id="cmd" class="config" type="radio" name="pluginModel" value="cmd">
+                        <label for="cmd">插件扩展(命令模式)</label>
+                    </div>
+
+                    <div>
+                        <input id="format" class="config" type="radio" name="pluginModel" value="format">
+                        <label for="format">插件扩展(格式模式)</label>
+                    </div>
+
+                    <div>
+                        <input id="native" class="config" type="radio" name="pluginModel" value="native">
+                        <label for="native">插件扩展(官方)</label>
+                    </div>
                 </div>
 
-                <div>
-                    <input id="gpt3.5" type="radio" name="ai-model" value="gpt3.5">
-                    <label for="gpt3.5">GPT 3.5</label>
-                </div>
-
-                <div>
-                    <input id="gpt4" type="radio" name="ai-model" value="gpt4">
-                    <label for="gpt4">GPT 4</label><br>
-                    <p>目前最强的AI大模型</p>
-                    <p>使用请输入邀请码:<input id="gpt4Code"></p>
-                    <p>联系作者获取邀请码</p>
-                    <p>微信:LK_eternal</p>
-                </div>
-            </div>
-
-            <div>
-                <h2>工具模型</h2>
-                <div>
-                    <input id="none" type="radio" name="tool-model" value="none" checked>
-                    <label for="none">不使用</label>
-                </div>
-
-                <div>
-                    <input id="cmd" type="radio" name="tool-model" value="cmd">
-                    <label for="cmd">工具扩展(命令模式)</label>
-                </div>
-
-                <div>
-                    <input id="format" type="radio" name="tool-model" value="format">
-                    <label for="format">工具扩展(格式模式)</label>
-                </div>
-
-                <div>
-                    <input id="native" type="radio" name="tool-model" value="native">
-                    <label for="native">工具扩展(官方)</label>
+                <div id="pluginList">
+                    <h2>插件列表</h2>
                 </div>
             </div>
         </div>

@@ -4,6 +4,9 @@ package lk.eternal.ai.plugin;
 import lk.eternal.ai.dto.req.Parameters;
 import lk.eternal.ai.dto.resp.SearchResponse;
 import lk.eternal.ai.util.Mapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.ProxySelector;
@@ -16,27 +19,23 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+@Component
 public class GoogleSearchPlugin implements Plugin {
 
-    private final static HttpClient HTTP_CLIENT;
+    private final HttpClient HTTP_CLIENT;
 
-    static {
-        final var builder = HttpClient.newBuilder()
+    @Value("${google.search.key}")
+    private String key;
+    @Value("${google.search.cx}")
+    private String cx;
+
+    public GoogleSearchPlugin(ProxySelector proxySelector) {
+        HTTP_CLIENT = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
-                .connectTimeout(Duration.ofMinutes(1));
-        if (ProxySelector.getDefault() != null) {
-            builder.proxy(ProxySelector.getDefault());
-        }
-        HTTP_CLIENT = builder.build();
-    }
-
-    private final String key;
-    private final String cx;
-
-    public GoogleSearchPlugin(String key, String cx) {
-        this.key = key;
-        this.cx = cx;
+                .connectTimeout(Duration.ofMinutes(1))
+                .proxy(proxySelector).build();
     }
 
     @Override
@@ -45,8 +44,13 @@ public class GoogleSearchPlugin implements Plugin {
     }
 
     @Override
-    public String description() {
+    public String prompt() {
         return "A search engine plugin based on Google API. When the user's question contains real-time content, it uses Google's powerful search capabilities to retrieve relevant information and return the title, summary, and link of the related web page. The plug-in can be used to query news, academic articles, technical documents, and other types of information to help users quickly find the content they need. Note: Use this tool only when the user's question contains real-time content. It is recommended to use English for searching.";
+    }
+
+    @Override
+    public String description() {
+        return "3.Google搜索";
     }
 
     @Override
@@ -55,13 +59,10 @@ public class GoogleSearchPlugin implements Plugin {
     }
 
     @Override
-    public String execute(Object args) {
-        String exp;
-        if(args instanceof Map<?,?>){
-            exp = ((Map<String, Object>)args).get("q").toString();
-        }else{
-            exp = args.toString();
-        }
+    public String execute(Map<String, Object> args) {
+        String exp = Optional.ofNullable(args.get("q"))
+                .orElseGet(() -> args.get("value"))
+                .toString();
         try {
             final HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s&start=1&num=10".formatted(this.key, this.cx, URLEncoder.encode(exp, StandardCharsets.UTF_8))))

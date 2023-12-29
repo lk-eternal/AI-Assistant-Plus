@@ -9,21 +9,21 @@
 }
 
 .loading::after {
-  content: '...';
-  animation: loading 2s infinite;
-  display: inline-block;
+    content: '...';
+    animation: loading 2s infinite;
+    display: inline-block;
 }
 
 @keyframes loading {
-  0% {
-    content: '.';
-  }
-  33% {
-    content: '..';
-  }
-  66% {
-    content: '...';
-  }
+    0% {
+        content: '.';
+    }
+    33% {
+        content: '..';
+    }
+    66% {
+        content: '...';
+    }
 }
 
 body {
@@ -47,19 +47,19 @@ button:hover {
     cursor: pointer;
 }
 
-.title{
+.title {
     font-size: 3vh;
     line-height: 1.5;
     color: white;
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
-    .title{
+    .title {
         display: none;
     }
 }
 
-.content{
+.content {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -126,7 +126,7 @@ button:hover {
     align-self: flex-end;
 }
 
-#chatBox > div code{
+#chatBox > div code {
     color: #f8f8ff;
     background-color: #2b2b2b;
     border-radius: 3px;
@@ -136,7 +136,7 @@ button:hover {
     font-size: larger;
 }
 
-#chatBox > div p{
+#chatBox > div p {
     margin: 0px;
 }
 
@@ -164,7 +164,7 @@ button:hover {
     }
 }
 
-#chatBox > div pre code{
+#chatBox > div pre code {
     background-color: unset;
     border-radius: 0;
     box-shadow: none;
@@ -174,19 +174,16 @@ button:hover {
 
 #chatBox > div a {
     display: inline-flex;
-    color: #f8f8ff;
-    background-color: #2b2b2b;
-    border-radius: 3px;
-    box-shadow: 2px 2px 5px black;
+    color: #98d7cf;
     max-height: 300px;
-    max-width: 250px;
+    max-width: 100%;
     overflow: auto;
     margin: 0 5px;
     cursor: pointer;
 }
 
 #chatBox > div a:hover {
-    background-color: none;
+    color: #18c8e7;
 }
 
 div .copy-button {
@@ -231,7 +228,7 @@ div .copy-button {
     padding: 5px 0px 5px 0px;
 }
 
-.toolBox button{
+.toolBox button {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -243,7 +240,7 @@ div .copy-button {
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
-    .toolBox button{
+    .toolBox button {
         width: 10vw;
         height: 10vw;
         margin: 0 2vw 0 0;
@@ -254,13 +251,17 @@ div .copy-button {
 
 #settingBox {
     display: none;
-    position: fixed;
+    position: absolute;
+    width: fit-content;
+    min-width: 30vw;
+    max-width: 50vw;
+    max-height: 50vh;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     color: white;
     background: #2b2b2b;
-    padding: 20px;
+    padding: 10px 0 20px 20px;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     z-index: 9999;
@@ -268,46 +269,66 @@ div .copy-button {
 
 @media (max-width: 1000px) and (min-height: 800px) {
     #settingBox {
-        width: 80vw;
+        width: 100vw;
+        height: 100vh;
+        max-width: unset;
+        max-height: unset;
+        padding: unset;
     }
 }
 
-#settingBox > div{
-    width: 50%;
+#settingBox > div {
+    overflow-y: auto;
+    height: 50vh;
+    width: 100%;
+    flex-direction: column;
 }
 
-#settingBox > div > div {
-    padding-top: 2%;
+@media (max-width: 1000px) and (min-height: 800px) {
+    #settingBox > div {
+        width: 100vw;
+        height: 100vh;
+        padding: 0 3vw;
+    }
 }
 
-#settingBox p{
+@media (max-width: 1000px) and (min-height: 800px) {
+    #settingBox > div > div {
+        padding-bottom: 3vw;
+    }
+}
+
+#settingBox p {
     margin: 0 0 0 3vh;
     font-size: 0.75em;
     color: #ccc;
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
-    #settingBox p{
+    #settingBox p {
         margin: 0 0 0 6vw;
     }
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
-    #settingBox input{
+    #settingBox input {
         margin: 0 0 0 3vw;
-        width: 3vw;
         height: 3vw;
     }
 }
 
-#gpt4Code{
+#gpt4Code {
     width: 40%;
 }
 
-@media (max-width: 1000px) and (min-height: 800px){
-    #gpt4Code{
+@media (max-width: 1000px) and (min-height: 800px) {
+    #gpt4Code {
         width: 30vw !important;
     }
+}
+
+#pluginList {
+    display: none;
 }
 
 #closeBtn {
@@ -335,7 +356,7 @@ div .copy-button {
     }
 }
 
-.inputBox textarea{
+.inputBox textarea {
     width: inherit;
     border: none;
     background-color: unset;

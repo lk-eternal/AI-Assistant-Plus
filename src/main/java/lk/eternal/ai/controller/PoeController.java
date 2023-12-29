@@ -8,7 +8,7 @@ import lk.eternal.ai.dto.resp.PoeEventResp;
 import lk.eternal.ai.exception.ApiUnauthorizedException;
 import lk.eternal.ai.model.ai.AiModel;
 import lk.eternal.ai.model.ai.ChatGPTAiModel;
-import lk.eternal.ai.model.tool.NoneToolModel;
+import lk.eternal.ai.model.plugin.NonePluginModel;
 import lk.eternal.ai.util.Assert;
 import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 
 @RestController
@@ -30,7 +31,7 @@ public class PoeController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PoeController.class);
 
-    private final NoneToolModel toolModel;
+    private final NonePluginModel pluginModel;
     private final AiModel aiModel;
     private final String token;
 
@@ -38,7 +39,7 @@ public class PoeController {
             , @Value("${openai.key}") String openaiApiKey
             , @Value("${poe.token}") String poeToken) {
         aiModel = new ChatGPTAiModel(openaiApiKey, openaiApiUrl, "gpt3.5", "gpt-3.5-turbo-1106");
-        toolModel = new NoneToolModel();
+        pluginModel = new NonePluginModel();
         token = poeToken;
     }
 
@@ -51,13 +52,13 @@ public class PoeController {
         Assert.notNull(appReq, "无效请求");
         LOGGER.info("appReq: {}", Mapper.writeAsStringNotError(appReq));
 
-        response.setContentType(MediaType.TEXT_EVENT_STREAM_VALUE);
-
         final var messages = new LinkedList<>(appReq.getQuery().stream().map(q -> new Message(q.getRole().equals("bot") ? aiModel.getModelRole() : q.getRole(), q.getContent(), null, null, null, null)).toList());
 
+        response.setContentType(MediaType.TEXT_EVENT_STREAM_VALUE);
         response.setStatus(HttpStatus.OK.value());
+
         final var os = response.getOutputStream();
-        this.toolModel.question(this.aiModel, messages, () -> false, resp -> {
+        this.pluginModel.question(this.aiModel, messages, Collections.emptyList(), a -> null, () -> false, resp -> {
             try {
                 final var poeEventResp = switch (resp.status()) {
                     case TYPING -> new PoeEventResp("text", new PoeEventResp.TextEvent(resp.message()));

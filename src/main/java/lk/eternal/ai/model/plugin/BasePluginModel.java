@@ -1,53 +1,42 @@
-package lk.eternal.ai.model.tool;
+package lk.eternal.ai.model.plugin;
 
 
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.dto.req.Tool;
 import lk.eternal.ai.dto.resp.ChatResp;
 import lk.eternal.ai.dto.resp.GPTResp;
-import lk.eternal.ai.plugin.Plugin;
 import lk.eternal.ai.model.ai.AiModel;
+import lk.eternal.ai.plugin.Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
-public abstract class BaseToolModel implements ToolModel {
+public abstract class BasePluginModel implements PluginModel {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BaseToolModel.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BasePluginModel.class);
 
     private static final int MAX_HISTORY = 10;
 
-
-    protected final Map<String, Plugin> pluginMap;
-
-    public BaseToolModel() {
-        this.pluginMap = new HashMap<>();
-    }
-
-    public void addPlugin(Plugin plugin) {
-        this.pluginMap.put(plugin.name(), plugin);
-    }
-
     @Override
-    public void question(AiModel aiModel, LinkedList<Message> messages, Supplier<Boolean> stopCheck, Consumer<ChatResp> respConsumer) {
+    public void question(AiModel aiModel, LinkedList<Message> messages, List<Plugin> plugins, Function<String, Map<String, Object>> pluginProperties, Supplier<Boolean> stopCheck, Consumer<ChatResp> respConsumer) {
         LOGGER.info("User: {}", messages.getLast().getContent());
         try {
             String resp;
             while (!stopCheck.get()) {
                 final GPTResp[] respHolder = {null};
 
-                final var prompt = getPrompt();
+                final var prompt = getPrompt(plugins);
                 while (messages.size() > MAX_HISTORY) {
                     messages.removeFirst();
                     messages.removeFirst();
                 }
-                aiModel.request(prompt, messages, getStops(), getTools(), stopCheck, gptResp -> {
+                aiModel.request(prompt, messages, getStops(), getTools(plugins), stopCheck, gptResp -> {
                     if (respHolder[0] == null) {
                         respHolder[0] = gptResp;
                     }
@@ -59,7 +48,7 @@ public abstract class BaseToolModel implements ToolModel {
                 });
                 final var gptResp = respHolder[0];
                 final var aiMessage = gptResp.getMessage();
-                final var pluginCalls = getPluginCall(aiMessage);
+                final var pluginCalls = getPluginCall(aiMessage, plugins);
                 resp = gptResp.getContent();
                 LOGGER.info("AI: {}", resp);
                 if (pluginCalls == null || pluginCalls.isEmpty()) {
@@ -70,9 +59,14 @@ public abstract class BaseToolModel implements ToolModel {
                 for (PluginCall pluginCall : pluginCalls) {
                     final var id = pluginCall.id();
                     final var name = pluginCall.name();
-                    final var args = pluginCall.args();
+                    final var args = pluginProperties.apply(name);
+                    args.putAll(pluginCall.args());
                     respConsumer.accept(new ChatResp(ChatResp.ChatStatus.FUNCTION_CALLING, name));
-                    final var s = executePlugin(name, args);
+                    final var s = plugins.stream()
+                            .filter(p -> p.name().equals(name))
+                            .findFirst()
+                            .map(p -> executePlugin(p, args))
+                            .orElse("Unsupported plugin");
                     if (id != null) {
                         messages.add(Message.create("tool", id, name, s));
                     } else {
@@ -88,30 +82,26 @@ public abstract class BaseToolModel implements ToolModel {
         }
     }
 
-    public abstract String getPrompt();
-
-    protected abstract List<String> getStops();
-
-    protected abstract List<Tool> getTools();
-
-    protected abstract List<PluginCall> getPluginCall(Message message);
-
-    protected String executePlugin(String pluginName, Object param) {
-        if (!this.pluginMap.containsKey(pluginName)) {
-            return "不支持该工具";
-        }
-        LOGGER.info("System: 执行{}命令:{}", pluginName, param);
-        final String result;
+    private String executePlugin(Plugin p, Map<String, Object> args) {
+        LOGGER.info("System: 执行{}命令:{}", p.name(), args);
         try {
-            result = this.pluginMap.get(pluginName).execute(param);
+            final var result = p.execute(args);
+            LOGGER.info("System: {}{}", result.substring(0, Math.min(result.length(), 100)).replaceAll("\n", ""), result.length() > 100 ? "..." : "");
+            return result;
         } catch (Exception e) {
             return "执行异常:" + e.getMessage();
         }
-        LOGGER.info("System: {}{}", result.substring(0, Math.min(result.length(), 100)).replaceAll("\n", ""), result.length() > 100 ? "..." : "");
-        return result;
     }
 
-    public record PluginCall(String id, String name, Object args) {
+    public abstract String getPrompt(List<Plugin> plugins);
+
+    protected abstract List<String> getStops();
+
+    protected abstract List<Tool> getTools(List<Plugin> plugins);
+
+    protected abstract List<PluginCall> getPluginCall(Message message, List<Plugin> plugins);
+
+    public record PluginCall(String id, String name, Map<String, Object> args) {
 
     }
 }

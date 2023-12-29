@@ -1,14 +1,17 @@
 package lk.eternal.ai.plugin;
 
 import lk.eternal.ai.dto.req.Parameters;
+import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+//@Component
 public class CmdPlugin implements Plugin {
 
     @Override
@@ -17,8 +20,13 @@ public class CmdPlugin implements Plugin {
     }
 
     @Override
-    public String description() {
+    public String prompt() {
         return "A tool for executing cmd commands. This tool can run in a Windows 11 environment and execute corresponding operations by receiving commands from users. When using this tool, please do not enter any commands that may pose a threat to system security.";
+    }
+
+    @Override
+    public String description() {
+        return "6.命令提示符(CMD)";
     }
 
     @Override
@@ -27,13 +35,10 @@ public class CmdPlugin implements Plugin {
     }
 
     @Override
-    public String execute(Object args) {
-        String exp;
-        if (args instanceof Map<?, ?>) {
-            exp = ((Map<String, Object>) args).get("exec").toString();
-        } else {
-            exp = args.toString();
-        }
+    public String execute(Map<String, Object> args) {
+        String exp = Optional.ofNullable(args.get("exec"))
+                .orElseGet(() -> args.get("value"))
+                .toString();
 
         StringBuilder result = new StringBuilder();
         try {

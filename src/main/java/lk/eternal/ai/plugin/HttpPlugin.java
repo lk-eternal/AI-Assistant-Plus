@@ -2,6 +2,7 @@ package lk.eternal.ai.plugin;
 
 
 import lk.eternal.ai.dto.req.Parameters;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.ProxySelector;
@@ -11,8 +12,10 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
+@Component
 public class HttpPlugin implements Plugin {
 
     private final static HttpClient HTTP_CLIENT;
@@ -33,8 +36,13 @@ public class HttpPlugin implements Plugin {
     }
 
     @Override
-    public String description() {
+    public String prompt() {
         return "A web page access tool that retrieves the full text content of a webpage by sending a request to a specified URL. If the request fails, an error code is returned instead. With this tool, you can obtain real-time information from web pages and extract the necessary information from it. Note: Use this tool only when the user needs to query real-time information.";
+    }
+
+    @Override
+    public String description() {
+        return "2.Web浏览器";
     }
 
     @Override
@@ -43,13 +51,10 @@ public class HttpPlugin implements Plugin {
     }
 
     @Override
-    public String execute(Object args) {
-        String exp;
-        if(args instanceof Map<?,?>){
-            exp = ((Map<String, Object>)args).get("url").toString();
-        }else{
-            exp = args.toString();
-        }
+    public String execute(Map<String, Object> args) {
+        String exp = Optional.ofNullable(args.get("url"))
+                .orElseGet(() -> args.get("value"))
+                .toString();
         try {
             final HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(exp))

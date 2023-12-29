@@ -1,4 +1,4 @@
-package lk.eternal.ai.model.tool;
+package lk.eternal.ai.model.plugin;
 
 
 import lk.eternal.ai.dto.req.Message;
@@ -6,15 +6,18 @@ import lk.eternal.ai.dto.req.Tool;
 import lk.eternal.ai.plugin.Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class FormatToolModel extends BaseToolModel {
+@Component
+public class FormatPluginModel extends BasePluginModel {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FormatToolModel.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FormatPluginModel.class);
 
     private static final Pattern API_CHECK_PATTERN = Pattern.compile("动作[：:](.*?)\\n*输入[：:](.*)");
 
@@ -62,27 +65,15 @@ public class FormatToolModel extends BaseToolModel {
                                                                                      
             """;
 
-    private String prompt;
-
-
-    public FormatToolModel() {
-    }
-
     @Override
     public String getName() {
         return "format";
     }
 
     @Override
-    public void addPlugin(Plugin plugin) {
-        super.addPlugin(plugin);
-        this.prompt = PROMPT_FORMAT.replace("${plugins}", this.pluginMap.entrySet().stream().map(e -> e.getKey() + ":" + e.getValue().description())
+    public String getPrompt(List<Plugin> plugins) {
+        return PROMPT_FORMAT.replace("${plugins}", plugins.stream().map(p -> p.name() + ":" + p.prompt())
                 .collect(Collectors.joining("\n")));
-    }
-
-    @Override
-    public String getPrompt() {
-        return this.prompt;
     }
 
     @Override
@@ -91,17 +82,20 @@ public class FormatToolModel extends BaseToolModel {
     }
 
     @Override
-    protected List<Tool> getTools() {
+    protected List<Tool> getTools(List<Plugin> plugins) {
         return null;
     }
 
     @Override
-    protected List<PluginCall> getPluginCall(Message message) {
+    protected List<PluginCall> getPluginCall(Message message, List<Plugin> plugins) {
         final var matcher = API_CHECK_PATTERN.matcher(message.getContent());
         if (matcher.find()) {
             final var name = matcher.group(1).trim();
             final var param = matcher.group(2).trim();
-            return Collections.singletonList(new PluginCall(null, name, param));
+            if (plugins.stream().noneMatch(p -> p.name().equals(name))) {
+                return null;
+            }
+            return Collections.singletonList(new PluginCall(null, name, Map.of("value", param)));
         }
         return null;
     }

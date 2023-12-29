@@ -2,16 +2,18 @@ package lk.eternal.ai.plugin;
 
 
 import lk.eternal.ai.dto.req.Parameters;
+import org.springframework.stereotype.Component;
 
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+@Component
 public class DbPlugin implements Plugin {
-    private final String dbUrl;
-    private final String dbUser;
-    private final String dbPassword;
 
     public DbPlugin() {
         try {
@@ -19,9 +21,6 @@ public class DbPlugin implements Plugin {
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
-        dbUrl = System.getProperty("db.url");
-        dbUser = System.getProperty("db.username");
-        dbPassword = System.getProperty("db.password");
     }
 
     @Override
@@ -30,8 +29,20 @@ public class DbPlugin implements Plugin {
     }
 
     @Override
-    public String description() {
+    public String prompt() {
         return "A tool for executing database operations. This tool is already connected to a specified Postgresql database and can execute corresponding database operations by receiving SQL statements from users. With this tool, you can easily complete various database query and operation tasks.";
+    }
+
+    @Override
+    public String description() {
+        return "4.Postgresql数据库";
+    }
+
+    @Override
+    public List<Prop> properties() {
+        return List.of(new Prop("url", "url")
+                ,new Prop("username", "username")
+                ,new Prop("password", "password"));
     }
 
     @Override
@@ -40,14 +51,11 @@ public class DbPlugin implements Plugin {
     }
 
     @Override
-    public String execute(Object args) {
-        String exp;
-        if(args instanceof Map<?,?>){
-            exp = ((Map<String, Object>)args).get("sql").toString();
-        }else{
-            exp = args.toString();
-        }
-        try (final var connection = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
+    public String execute(Map<String, Object> args) {
+        String exp = Optional.ofNullable(args.get("sql"))
+                .orElseGet(() -> args.get("value"))
+                .toString();
+        try (final var connection = DriverManager.getConnection(args.get("url").toString(), args.get("username").toString(), args.get("password").toString());
              final var statement = connection.prepareStatement(exp)) {
             boolean isResultSet = statement.execute();  // 执行 SQL 语句
 

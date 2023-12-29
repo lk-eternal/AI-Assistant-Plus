@@ -1,6 +1,5 @@
 package lk.eternal.ai.config;
 
-import lk.eternal.ai.controller.LKController;
 import lk.eternal.ai.exception.ApiUnauthorizedException;
 import lk.eternal.ai.exception.ApiValidationException;
 import org.slf4j.Logger;

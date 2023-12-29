@@ -1,25 +1,28 @@
-package lk.eternal.ai.model.tool;
+package lk.eternal.ai.model.plugin;
 
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.dto.resp.ChatResp;
 import lk.eternal.ai.dto.resp.GPTResp;
 import lk.eternal.ai.exception.GPTException;
 import lk.eternal.ai.model.ai.AiModel;
+import lk.eternal.ai.plugin.Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class NoneToolModel implements ToolModel {
+@Component
+public class NonePluginModel implements PluginModel {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(NoneToolModel.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(NonePluginModel.class);
 
     private static final int MAX_HISTORY = 10;
-
-    public NoneToolModel() {
-    }
 
     @Override
     public String getName() {
@@ -27,7 +30,7 @@ public class NoneToolModel implements ToolModel {
     }
 
     @Override
-    public void question(AiModel aiModel, LinkedList<Message> messages, Supplier<Boolean> stopCheck, Consumer<ChatResp> respConsumer) {
+    public void question(AiModel aiModel, LinkedList<Message> messages, List<Plugin> plugins, Function<String, Map<String, Object>> pluginProperties, Supplier<Boolean> stopCheck, Consumer<ChatResp> respConsumer) {
         LOGGER.info("User: {}", messages.getLast().getContent());
         while (messages.size() > MAX_HISTORY) {
             messages.removeFirst();

@@ -10,8 +10,9 @@ document.addEventListener('DOMContentLoaded', function () {
     let inputTextArea = document.getElementById('inputTextArea');
     let sendBtn = document.getElementById('sendBtn');
     let stopBtn = document.getElementById('stopBtn');
+    let pluginListDiv = document.getElementById('pluginList');
 
-    window.addEventListener("beforeunload", clearMessages);
+    window.addEventListener("beforeunload", logout);
 
     clearBtn.addEventListener('click', clearMessages);
     settingBtn.addEventListener('click', openSettingModal);
@@ -27,11 +28,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let aiModel = {
         getAiModelValue() {
-            return document.querySelector('input[name="ai-model"]:checked').value;
+            return document.querySelector('input[name="aiModel"]:checked').value;
         },
 
         getAiModel(modelName) {
-            return document.querySelector('input[name="ai-model"][value="' + modelName + '"]');
+            return document.querySelector('input[name="aiModel"][value="' + modelName + '"]');
         },
 
         disableAiModel(modelName) {
@@ -47,50 +48,57 @@ document.addEventListener('DOMContentLoaded', function () {
         },
     }
 
-    let toolModel = {
-        getToolModelValue() {
-            return document.querySelector('input[name="tool-model"]:checked').value;
+    let pluginModel = {
+        getPluginModelValue() {
+            return document.querySelector('input[name="pluginModel"]:checked').value;
         },
 
-        getToolModel(modelName) {
-            return document.querySelector('input[name="tool-model"][value="' + modelName + '"]');
+        getPluginModel(modelName) {
+            return document.querySelector('input[name="pluginModel"][value="' + modelName + '"]');
         },
 
-        disableToolModel(modelName) {
-            let model = this.getToolModel(modelName);
+        disablePluginModel(modelName) {
+            let model = this.getPluginModel(modelName);
             if (model.checked) {
-                this.getToolModel('none').checked = true;
+                this.getPluginModel('none').checked = true;
             }
             model.disabled = true;
         },
 
-        enableToolModel(modelName) {
-            this.getToolModel(modelName).disabled = false;
+        enablePluginModel(modelName) {
+            this.getPluginModel(modelName).disabled = false;
         },
     }
 
-    let toolModels = document.querySelectorAll('input[name="tool-model"]');
-    toolModels.forEach(tm => {
+    let pluginModels = document.querySelectorAll('input[name="pluginModel"]');
+    pluginModels.forEach(tm => {
         tm.addEventListener('change', function () {
-            if (toolModel.getToolModelValue() === 'native') {
+            if (pluginModel.getPluginModelValue() === 'native') {
                 aiModel.disableAiModel('tyqw');
                 aiModel.disableAiModel('gemini');
             } else {
                 aiModel.enableAiModel('tyqw');
                 aiModel.enableAiModel('gemini');
             }
+
+            if (pluginModel.getPluginModelValue() !== 'none') {
+                pluginListDiv.style.display = 'block';
+            } else {
+                pluginListDiv.style.display = 'none';
+            }
         });
     });
 
-    let aiModels = document.querySelectorAll('input[name="ai-model"]');
+    let aiModels = document.querySelectorAll('input[name="aiModel"]');
     aiModels.forEach(am => {
         am.addEventListener('change', function () {
             let aiModelValue = aiModel.getAiModelValue();
             if (aiModelValue !== 'gpt3.5' && aiModelValue !== 'gpt4') {
-                toolModel.disableToolModel('native');
+                pluginModel.disablePluginModel('native');
             } else {
-                toolModel.enableToolModel('native');
+                pluginModel.enablePluginModel('native');
             }
+            document.getElementById("gpt4CodeDiv").style.display = aiModelValue === 'gpt4' ? 'block' : 'none';
         });
     });
 
@@ -100,6 +108,84 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function closeSettingModal() {
         settingBox.style.display = 'none';
+        updateProperties();
+
+    }
+
+    getPlugins();
+    function getPlugins(){
+        fetch('/api/plugins', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8'
+            }
+        }).then(r => {
+            if(r.ok){
+                r.json().then(pluginList => {
+                    console.log(pluginList)
+
+                    for (let i = 0; i < pluginList.length; i++) {
+                        let plugin = pluginList[i];
+                        let div = document.createElement('div');
+                        let id = `plugin-${plugin.name}`;
+                        div.innerHTML = `
+                            <input id="${id}" class="config" type="checkbox" name="plugins" value="${plugin.name}">
+                            <label for="plugin-${plugin.name}">${plugin.description}</label>
+                            <div class="properties" style="display: none">
+                            ${plugin.requireProperties.map(p => `
+                                <p>${p.description}:<input class="config" name="plugin-${plugin.name}-${p.key}"></p>
+                            `).join('\n')}
+                            </div>
+                        `;
+                        pluginListDiv.appendChild(div);
+                        let checkbox = document.getElementById(id);
+                        checkbox.addEventListener("change", () => {
+                            div.querySelector("div.properties").style.display = checkbox.checked ? 'block' : 'none';
+                        })
+                    }
+                });
+            }
+        })
+    }
+
+    updateProperties();
+    function updateProperties() {
+        let configMap = {};
+        let inputs = settingBox.querySelectorAll('input.config');
+        for (let i = 0; i < inputs.length; i++) {
+            let input = inputs[i];
+            let key = input.name;
+            let value;
+            if (input.type === 'radio') {
+                if(input.checked){
+                    value = input.value;
+                }
+            } else if (input.type === 'checkbox') {
+                if(input.checked){
+                    value = input.value;
+                    if(configMap[key] === undefined && value !== undefined){
+                        configMap[key] = [];
+                    }
+                }
+            } else {
+                value = input.value;
+            }
+            if (value !== undefined) {
+                if(Array.isArray(configMap[key])){
+                    configMap[key].push(value);
+                }else{
+                    configMap[key] = value;
+                }
+            }
+        }
+        console.log(configMap)
+        fetch('/api/properties', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8'
+            },
+            body: JSON.stringify(configMap)
+        })
     }
 
     function isMobileDevice() {
@@ -147,18 +233,13 @@ document.addEventListener('DOMContentLoaded', function () {
         chatBox.insertBefore(respDiv, stopBtn);
         chatBox.scrollTop = chatBox.scrollHeight;
 
-        let gpt4Code = document.getElementById('gpt4Code').value;
-
         fetch('/api/question', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8'
             },
             body: JSON.stringify({
-                'aiModel': aiModel.getAiModelValue(),
-                'toolModel': toolModel.getToolModelValue(),
-                'question': question,
-                'gpt4Code': gpt4Code
+                'question': question
             })
         }).then(async response => {
             if (!response.ok) {
@@ -292,6 +373,16 @@ document.addEventListener('DOMContentLoaded', function () {
     function stopMessage() {
         stopReading = true;
         fetch('/api/stop', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8'
+            }
+        });
+    }
+
+    function logout() {
+        stopReading = true;
+        fetch('/api/exit', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8'
