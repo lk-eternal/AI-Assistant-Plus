@@ -289,6 +289,7 @@ div .copy-button {
     #settingBox > div {
         width: 100vw;
         height: 100vh;
+        max-height: unset;
         padding: 0 3vw;
     }
 }
