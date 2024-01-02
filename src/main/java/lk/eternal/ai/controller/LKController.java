@@ -148,7 +148,7 @@ public class LKController {
                     final var sessionId = session.getId();
 
                     Cookie sessionCookie = new Cookie("JSESSIONID", sessionId);
-                    sessionCookie.setSecure(request.isSecure());
+                    sessionCookie.setSecure(true);
                     sessionCookie.setHttpOnly(true);
                     sessionCookie.setAttribute("SameSite", "None");
                     response.addCookie(sessionCookie);
