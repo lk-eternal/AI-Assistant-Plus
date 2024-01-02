@@ -1,7 +1,7 @@
 package lk.eternal.ai.domain;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import jakarta.persistence.*;
+//import jakarta.persistence.*;
 import lk.eternal.ai.dto.req.Message;
 import lk.eternal.ai.util.Mapper;
 
@@ -12,16 +12,16 @@ import java.util.stream.Collectors;
 //@Table(name = "users")
 public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.AUTO)
     private final String id;
 
-    @Convert(converter = MessageListConverter.class)
+//    @Convert(converter = MessageListConverter.class)
     private final LinkedList<Message> messages;
 
     private final Map<String, Object> properties;
 
-    @Enumerated(EnumType.STRING)
+//    @Enumerated(EnumType.STRING)
     private Status status;
 
     public User(String id) {
@@ -90,29 +90,29 @@ public class User {
         STOPPING,
         WAITING
     }
-
-    @Converter
-    public class MessageListConverter implements AttributeConverter<List<Message>, String> {
-
-
-        @Override
-        public String convertToDatabaseColumn(List<Message> value) {
-            try {
-                return value != null ? Mapper.getObjectMapper().writeValueAsString(value) : null;
-            } catch (Exception e) {
-                throw new RuntimeException("Error converting to JSON", e);
-            }
-        }
-
-        @Override
-        public List<Message> convertToEntityAttribute(String dbData) {
-            try {
-                return dbData != null ? Mapper.getObjectMapper().readValue(dbData, new TypeReference<LinkedList<Message>>() {}) : null;
-            } catch (Exception e) {
-                throw new RuntimeException("Error converting from JSON", e);
-            }
-        }
-    }
+//
+//    @Converter
+//    public class MessageListConverter implements AttributeConverter<List<Message>, String> {
+//
+//
+//        @Override
+//        public String convertToDatabaseColumn(List<Message> value) {
+//            try {
+//                return value != null ? Mapper.getObjectMapper().writeValueAsString(value) : null;
+//            } catch (Exception e) {
+//                throw new RuntimeException("Error converting to JSON", e);
+//            }
+//        }
+//
+//        @Override
+//        public List<Message> convertToEntityAttribute(String dbData) {
+//            try {
+//                return dbData != null ? Mapper.getObjectMapper().readValue(dbData, new TypeReference<LinkedList<Message>>() {}) : null;
+//            } catch (Exception e) {
+//                throw new RuntimeException("Error converting from JSON", e);
+//            }
+//        }
+//    }
 
 
 }
