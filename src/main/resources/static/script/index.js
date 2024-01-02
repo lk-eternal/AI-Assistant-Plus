@@ -108,7 +108,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function closeSettingModal() {
         settingBox.style.display = 'none';
-        updateProperties();
 
     }
 
@@ -148,8 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
     }
 
-    updateProperties();
-    function updateProperties() {
+    async function updateProperties() {
         let configMap = {};
         let inputs = settingBox.querySelectorAll('input.config');
         for (let i = 0; i < inputs.length; i++) {
@@ -179,7 +177,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
         console.log(configMap)
-        fetch('/api/properties', {
+        return fetch('/api/properties', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8'
@@ -212,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let stopReading = false;
 
-    function sendMessage() {
+    async function sendMessage() {
         let question = inputTextArea.value;
         if (question === undefined || question === '') {
             question = inputTextArea.placeholder;
@@ -233,6 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
         chatBox.insertBefore(respDiv, stopBtn);
         chatBox.scrollTop = chatBox.scrollHeight;
 
+        await updateProperties();
         fetch('/api/question', {
             method: 'POST',
             headers: {

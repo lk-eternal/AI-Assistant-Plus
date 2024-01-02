@@ -59,7 +59,7 @@ public class User {
     public List<String> getPlugins(){
         return (List<String>) Optional.ofNullable(getProperty("plugins"))
                 .filter(ps -> ps instanceof List)
-                .orElse(null);
+                .orElseGet(Collections::emptyList);
     }
 
     public void clear(){
