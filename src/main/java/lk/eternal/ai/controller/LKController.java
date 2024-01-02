@@ -1,5 +1,6 @@
 package lk.eternal.ai.controller;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -10,23 +11,17 @@ import lk.eternal.ai.dto.resp.PluginResp;
 import lk.eternal.ai.exception.ApiUnauthorizedException;
 import lk.eternal.ai.exception.ApiValidationException;
 import lk.eternal.ai.model.ai.AiModel;
-import lk.eternal.ai.model.ai.ChatGPTAiModel;
-import lk.eternal.ai.model.ai.GeminiAiModel;
-import lk.eternal.ai.model.ai.TongYiQianWenAiModel;
 import lk.eternal.ai.model.plugin.*;
 import lk.eternal.ai.plugin.*;
 import lk.eternal.ai.util.Assert;
 import lk.eternal.ai.util.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.net.ProxySelector;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -56,7 +51,7 @@ public class LKController {
         Assert.notNull(questionReq, "无效请求");
         LOGGER.info("questionReq: {}", Mapper.writeAsStringNotError(questionReq));
 
-        var user = getUserOrCreate(request);
+        var user = getUserOrCreate(request, response);
         Assert.isTrue(user.getStatus() == User.Status.WAITING, "请等待上次回答完成...");
 
         final var aiModelName = Optional.ofNullable(user.getAiModel())
@@ -124,8 +119,8 @@ public class LKController {
 
 
     @PutMapping("properties")
-    public void properties(@RequestBody Map<String, Object> properties, HttpServletRequest request){
-        var user = getUserOrCreate(request);
+    public void properties(@RequestBody Map<String, Object> properties, HttpServletRequest request, HttpServletResponse response){
+        var user = getUserOrCreate(request, response);
         properties.forEach(user::putProperty);
     }
 
@@ -145,12 +140,19 @@ public class LKController {
         return this.userMap.get(session.getId());
     }
 
-    private User getUserOrCreate(HttpServletRequest request) {
+    private User getUserOrCreate(HttpServletRequest request, HttpServletResponse response) {
         final var user = Optional.ofNullable(getUser(request))
                 .orElseGet(() -> {
                     final var session = request.getSession();
                     session.setMaxInactiveInterval(30 * 60);
                     final var sessionId = session.getId();
+
+                    Cookie sessionCookie = new Cookie("JSESSIONID", sessionId);
+                    sessionCookie.setSecure(request.isSecure());
+                    sessionCookie.setHttpOnly(true);
+                    sessionCookie.setAttribute("SameSite", "None");
+                    response.addCookie(sessionCookie);
+
                     final var u = new User(sessionId);
                     this.userMap.put(sessionId, u);
                     return u;
