@@ -33,6 +33,13 @@ public class UserController {
         userService.createUser(user, req.email(), req.password());
     }
 
+    @PostMapping("refresh")
+    public UserResp refresh(HttpServletRequest request) {
+        final var user = userService.getUser(SessionUtil.getSessionId(request))
+                .orElseThrow(() -> new ApiUnauthorizedException("未登录"));
+        return new UserResp(user);
+    }
+
     @PostMapping("login")
     public UserResp login(@RequestBody RegisterLoginReq req, HttpServletRequest request, HttpServletResponse response) {
         final var user = userService.getUserByEmail(req.email(), req.password())

@@ -2,6 +2,18 @@ function isMobileDevice() {
     return navigator.userAgent.match(/Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Opera Mini|Windows CE|WebOS|SymbianOS/i);
 }
 
+function isCookieExists(cookieName) {
+    let cookies = document.cookie.split('; ');
+    for (let i = 0; i < cookies.length; i++) {
+        let cookiePair = cookies[i].split('=');
+        if (decodeURIComponent(cookiePair[0]) === cookieName) {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 const Api = {
     get(url, params) {
         return fetch(`${url}?${new URLSearchParams(params).toString()}`, {
@@ -42,6 +54,10 @@ const Api = {
 const UserService = {
     register(email, password) {
         return Api.post('/user/register', {email: email, password: password});
+    },
+
+    refresh() {
+        return Api.post('/user/refresh');
     },
 
     login(email, password, loadHistory) {
@@ -102,6 +118,25 @@ let loginRegister = {
         let closeBtn = this.loginBox.querySelector('.closeBtn');
         closeBtn.addEventListener('click', () => this.close());
 
+        if (isCookieExists('LKSESSIONID')) {
+            UserService.refresh()
+                .then(r => {
+                    if (r.ok) {
+                        loginRegister.close();
+
+                        //加载消息
+                        chat.reset();
+                        r.json().then(user => {
+                            for (let message of user.messages) {
+                                chat.add(message)
+                            }
+                        });
+
+                        //加载设置
+
+                    }
+                });
+        }
     },
     register() {
         let email = this.emailInput.value;
@@ -114,7 +149,7 @@ let loginRegister = {
                         alert("注册成功")
                         loginRegister.close();
                     } else {
-                        window.alert("验证失败")
+                        r.text().then(t => window.alert(t))
                     }
                 })
                 .catch(e => {
@@ -130,14 +165,12 @@ let loginRegister = {
             UserService.login(email, pwd, loadHistory)
                 .then(r => {
                     if (r.ok) {
-                        //TODO
-                        alert("登录成功")
                         loginRegister.close();
 
                         //加载消息
                         chat.reset();
                         r.json().then(user => {
-                            for (let message in user.messages) {
+                            for (let message of user.messages) {
                                 chat.add(message)
                             }
                         });
@@ -145,7 +178,7 @@ let loginRegister = {
                         //加载设置
 
                     } else {
-                        window.alert("验证失败")
+                        r.text().then(t => window.alert(t))
                     }
                 })
                 .catch(e => {
@@ -363,9 +396,12 @@ let chat = {
         let clearBtn = document.getElementById('clearBtn');
         clearBtn.addEventListener('click', () => this.clear());
     },
-    add(content, div){
-        if(div === undefined){
+    add(content, div) {
+        if (div === undefined) {
             div = document.createElement('div');
+        }
+        if (!this.chatBox.contains(div)) {
+            this.chatBox.insertBefore(div, this.stopBtn);
         }
         try {
             div.innerHTML = marked.parse(content);
@@ -425,19 +461,14 @@ let chat = {
             question = this.inputTextArea.placeholder;
         }
         this.inputTextArea.value = '';
-
-        let reqDiv = document.createElement('div');
-        reqDiv.textContent = question;
-        this.chatBox.insertBefore(reqDiv, this.stopBtn);
-
+        this.add(question);
         this.inputTextArea.disabled = true;
         this.sendBtn.disabled = true;
 
         let respDiv = document.createElement('div');
         respDiv.innerHTML = '';
         respDiv.classList.add('loading');
-        this.chatBox.insertBefore(respDiv, this.stopBtn);
-        this.chatBox.scrollTop = this.chatBox.scrollHeight;
+        this.add('', respDiv);
 
         ChatService.question(question)
             .then(async response => {
@@ -500,23 +531,24 @@ let chat = {
                                 break;
                         }
 
-                        chat.add(content, respDiv);
+                        this.add(content, respDiv);
                     }
                 }
-            }).catch(err => {
-            console.error('Error:', err);
-            respDiv.classList.remove('loading');
-            respDiv.innerHTML = `<div>${err.message}</div>`;
-        }).finally(() => {
-            this.stopReading = false;
-            this.inputTextArea.disabled = false;
-            this.sendBtn.disabled = false;
-            if (!isMobileDevice()) {
-                this.inputTextArea.focus();
-            }
-            this.stopBtn.style.display = "none";
-            this.chatBox.scrollTop = this.chatBox.scrollHeight;
-        });
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                respDiv.classList.remove('loading');
+                this.add(err.message, respDiv);
+            })
+            .finally(() => {
+                this.stopReading = false;
+                this.inputTextArea.disabled = false;
+                this.sendBtn.disabled = false;
+                if (!isMobileDevice()) {
+                    this.inputTextArea.focus();
+                }
+                this.stopBtn.style.display = "none";
+            });
     },
     stop() {
         this.stopReading = true;
@@ -529,7 +561,7 @@ let chat = {
             this.sendBtn.disabled = false;
         });
     },
-    reset(){
+    reset() {
         let divs = this.chatBox.getElementsByTagName('div');
         for (let i = divs.length - 1; i > 0; i--) {
             this.chatBox.removeChild(divs[i]);

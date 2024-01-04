@@ -254,6 +254,7 @@ div .copy-button {
     flex-direction: column;
     position: absolute;
     width: fit-content;
+    min-width: 20vw;
     color: white;
     background: #2b2b2b;
     top: 50%;
@@ -263,6 +264,23 @@ div .copy-button {
     border: 1px solid #ccc;
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    #loginBox {
+        width: 100vw;
+        height: 100vh;
+        max-width: unset;
+        max-height: unset;
+        padding: unset;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transform: unset;
+        justify-content: center;
+    }
 }
 
 #loginBox input[type="email"], input[type="password"] {
@@ -284,6 +302,13 @@ div .copy-button {
     border: none;
     cursor: pointer;
     width: 100%;
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    #loadHistory {
+        width: 3vw;
+        height: 3vw;
+    }
 }
 
 #loginBtn {

@@ -15,7 +15,7 @@ public class SessionUtil {
                 .map(Arrays::stream)
                 .flatMap(cs -> cs
                         .filter(c -> c.getName().equals("LKSESSIONID"))
-                        .min(Comparator.comparing(c -> c.getAttribute("DbUser")))
+                        .findFirst()
                         .map(Cookie::getValue)
                         .map(TryUtils.all(UUID::fromString)))
                 .orElse(null);
@@ -23,10 +23,10 @@ public class SessionUtil {
 
     public static void setSessionId(User user, HttpServletResponse response) {
         Cookie sessionCookie = new Cookie("LKSESSIONID", user.getId().toString());
+        sessionCookie.setPath("/");
         sessionCookie.setSecure(true);
-        sessionCookie.setHttpOnly(true);
+        sessionCookie.setHttpOnly(false);
         sessionCookie.setAttribute("SameSite", "None");
-        sessionCookie.setAttribute("DbUser", String.valueOf(user.isDbUser()));
         response.addCookie(sessionCookie);
     }
 
