@@ -1,20 +1,21 @@
 package lk.eternal.ai.controller;
 
-import jakarta.servlet.http.Cookie;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import lk.eternal.ai.domain.User;
-import lk.eternal.ai.dto.req.QuestionReq;
 import lk.eternal.ai.dto.req.Message;
+import lk.eternal.ai.dto.req.QuestionReq;
 import lk.eternal.ai.dto.resp.PluginResp;
 import lk.eternal.ai.exception.ApiUnauthorizedException;
 import lk.eternal.ai.exception.ApiValidationException;
 import lk.eternal.ai.model.ai.AiModel;
-import lk.eternal.ai.model.plugin.*;
-import lk.eternal.ai.plugin.*;
+import lk.eternal.ai.model.plugin.PluginModel;
+import lk.eternal.ai.plugin.Plugin;
+import lk.eternal.ai.service.UserService;
 import lk.eternal.ai.util.Assert;
 import lk.eternal.ai.util.Mapper;
+import lk.eternal.ai.util.SessionUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.*;
 
 @RestController
 @RequestMapping("/api")
@@ -31,19 +31,25 @@ public class LKController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LKController.class);
 
-    private final Map<String, User> userMap = new ConcurrentHashMap<>();
-
-    private final ConcurrentHashMap<String, ScheduledFuture<?>> autoRemoveUserMap = new ConcurrentHashMap<>();
-    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
-
     private final Map<String, Plugin> pluginsMap = new HashMap<>();
     private final Map<String, PluginModel> pluginModelMap = new HashMap<>();
     private final Map<String, AiModel> aiModelMap = new HashMap<>();
+
+    @Resource
+    private UserService userService;
 
     public LKController(List<AiModel> aiModels, List<PluginModel> pluginModels, List<Plugin> plugins) {
         aiModels.forEach(aiModel -> this.aiModelMap.put(aiModel.getName(), aiModel));
         plugins.forEach(plugin -> this.pluginsMap.put(plugin.name(), plugin));
         pluginModels.forEach(pluginModel -> this.pluginModelMap.put(pluginModel.getName(), pluginModel));
+    }
+
+    @GetMapping("plugins")
+    public List<PluginResp> plugins() {
+        return pluginsMap.values().stream()
+                .sorted(Comparator.comparing(Plugin::description))
+                .map(p -> new PluginResp(p.name(), p.description(), p.properties()))
+                .toList();
     }
 
     @PostMapping("question")
@@ -57,8 +63,8 @@ public class LKController {
         final var aiModelName = Optional.ofNullable(user.getAiModel())
                 .filter(this.aiModelMap::containsKey)
                 .orElse("tyqw");
-        if (aiModelName.equals("gpt4") && !"lk123".equals(user.getGpt4Code())) {
-            throw new ApiUnauthorizedException("邀请码不正确");
+        if (aiModelName.equals("gpt4") && !user.isGpt4Enable()) {
+            throw new ApiUnauthorizedException("请输入邀请码");
         }
 
         final var pluginModelName = Optional.ofNullable(user.getPluginModel())
@@ -69,6 +75,7 @@ public class LKController {
         }
         user.setStatus(User.Status.TYING);
         user.getMessages().addLast(Message.user(questionReq.question()));
+        userService.updateUser(user);
 
         response.setContentType(MediaType.TEXT_EVENT_STREAM_VALUE);
         response.setStatus(HttpStatus.OK.value());
@@ -90,93 +97,32 @@ public class LKController {
                     }
                 });
         user.setStatus(User.Status.WAITING);
+        userService.updateUser(user);
         os.close();
     }
 
     @PostMapping("stop")
     public void stop(HttpServletRequest request) throws IOException {
-        final var user = getUser(request);
-        if (user != null && user.getStatus() == User.Status.TYING) {
-            user.setStatus(User.Status.STOPPING);
-        }
+        this.userService.getUser(SessionUtil.getSessionId(request))
+                .filter(u -> u.getStatus() == User.Status.TYING)
+                .ifPresent(user -> user.setStatus(User.Status.STOPPING));
     }
 
     @DeleteMapping("clear")
     public void clear(HttpServletRequest request) throws IOException {
-        final var user = getUser(request);
-        if (user != null) {
-            user.clear();
-        }
-    }
-
-    @PostMapping("exit")
-    public void exit(HttpServletRequest request) throws IOException {
-        final var user = getUser(request);
-        if (user != null) {
-            removeUser(user.getId());
-        }
-    }
-
-
-    @PutMapping("properties")
-    public void properties(@RequestBody Map<String, Object> properties, HttpServletRequest request, HttpServletResponse response){
-        var user = getUserOrCreate(request, response);
-        properties.forEach(user::putProperty);
-    }
-
-    @GetMapping("plugins")
-    public List<PluginResp> plugins(){
-        return pluginsMap.values().stream()
-                .sorted(Comparator.comparing(Plugin::description))
-                .map(p -> new PluginResp(p.name(), p.description(), p.properties()))
-                .toList();
-    }
-
-    private User getUser(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session == null) {
-            return null;
-        }
-        return this.userMap.get(session.getId());
+        this.userService.getUser(SessionUtil.getSessionId(request))
+                .ifPresent(user -> {
+                    user.clear();
+                    userService.updateUser(user);
+                });
     }
 
     private User getUserOrCreate(HttpServletRequest request, HttpServletResponse response) {
-        final var user = Optional.ofNullable(getUser(request))
-                .orElseGet(() -> {
-                    final var session = request.getSession();
-                    session.setMaxInactiveInterval(30 * 60);
-                    final var sessionId = session.getId();
-
-                    Cookie sessionCookie = new Cookie("JSESSIONID", sessionId);
-                    sessionCookie.setSecure(true);
-                    sessionCookie.setHttpOnly(true);
-                    sessionCookie.setAttribute("SameSite", "None");
-                    response.addCookie(sessionCookie);
-
-                    final var u = new User(sessionId);
-                    this.userMap.put(sessionId, u);
-                    return u;
-                });
-        resetUserLifeTime(user.getId());
+        final var sessionId = SessionUtil.getSessionId(request);
+        final var user = this.userService.getOrCreateUser(sessionId);
+        if (!user.getId().equals(sessionId)) {
+            SessionUtil.setSessionId(user, response);
+        }
         return user;
-    }
-
-    private void resetUserLifeTime(String sessionId) {
-        ScheduledFuture<?> future = autoRemoveUserMap.get(sessionId);
-        if (future != null && !future.isDone()) {
-            future.cancel(false);
-        }
-        autoRemoveUserMap.put(sessionId, executorService.schedule(() -> {
-            autoRemoveUserMap.remove(sessionId);
-            userMap.remove(sessionId);
-        }, 30, TimeUnit.MINUTES));
-    }
-
-    private void removeUser(String sessionId) {
-        this.userMap.remove(sessionId);
-        final ScheduledFuture<?> future = this.autoRemoveUserMap.remove(sessionId);
-        if (future != null && !future.isDone()) {
-            future.cancel(false);
-        }
     }
 }

@@ -1,40 +1,73 @@
 package lk.eternal.ai.domain;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-//import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lk.eternal.ai.domain.converter.ListConverter;
+import lk.eternal.ai.domain.converter.MapConverter;
+import lk.eternal.ai.domain.converter.MessageListConverter;
 import lk.eternal.ai.dto.req.Message;
-import lk.eternal.ai.util.Mapper;
+import lk.eternal.ai.util.PasswordUtil;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
-//
-//@Entity
-//@Table(name = "users")
-public class User {
 
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.AUTO)
-    private final String id;
+@Entity
+@Table(name = "lk_users")
+public class User extends BaseEntity{
 
-//    @Convert(converter = MessageListConverter.class)
-    private final LinkedList<Message> messages;
+    @Column(unique = true)
+    private String email;
 
+    private String password;
+
+    private boolean gpt4Enable;
+
+    @Convert(converter = MessageListConverter.class)
+    private LinkedList<Message> messages;
+
+    @Convert(converter = ListConverter.class)
+    private final List<String> plugins;
+
+    @Convert(converter = MapConverter.class)
     private final Map<String, Object> properties;
 
-//    @Enumerated(EnumType.STRING)
+    @Transient
     private Status status;
 
-    public User(String id) {
-        this.id = id;
+    public User() {
+        super(UUID.randomUUID());
         this.messages = new LinkedList<>();
+        this.plugins = new ArrayList<>();
         this.properties = new HashMap<>();
         this.status = Status.WAITING;
     }
 
-    public String getId() {
-        return id;
+    public String getEmail() {
+        return email;
     }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = PasswordUtil.hashPassword(password);
+    }
+
+    public String getAiModel() {
+        return getProperty("aiModel").map(Object::toString).orElse(null);
+    }
+
+    public String getPluginModel() {
+        return getProperty("pluginModel").map(Object::toString).orElse(null);
+    }
+
+    @JsonIgnore
     public synchronized Status getStatus() {
         return status;
     }
@@ -43,38 +76,40 @@ public class User {
         this.status = status;
     }
 
+    public void setMessages(LinkedList<Message> messages) {
+        this.messages = messages;
+    }
+
     public LinkedList<Message> getMessages() {
         return messages;
+    }
+
+    public Map<String, Object> getProperties() {
+        return properties;
     }
 
     public void putProperty(String key, Object value) {
         this.properties.put(key, value);
     }
 
-    public Object getProperty(String key) {
-        return this.properties.get(key);
+    @JsonIgnore
+    public Optional<Object> getProperty(String key) {
+        return Optional.ofNullable(this.properties.get(key));
     }
 
-    public String getAiModel() {
-        return getProperty("aiModel").toString();
+    public boolean isGpt4Enable() {
+        return gpt4Enable;
     }
 
-    public String getPluginModel() {
-        return getProperty("pluginModel").toString();
+    public void setGpt4Enable(boolean gpt4Enable) {
+        this.gpt4Enable = gpt4Enable;
     }
 
-    public String getGpt4Code() {
-        return getProperty("gpt4Code").toString();
+    public List<String> getPlugins() {
+        return plugins;
     }
 
-    @SuppressWarnings("unchecked")
-    public List<String> getPlugins(){
-        return (List<String>) Optional.ofNullable(getProperty("plugins"))
-                .filter(ps -> ps instanceof List)
-                .orElseGet(Collections::emptyList);
-    }
-
-    public void clear(){
+    public void clear() {
         this.messages.clear();
     }
 
@@ -90,29 +125,9 @@ public class User {
         STOPPING,
         WAITING
     }
-//
-//    @Converter
-//    public class MessageListConverter implements AttributeConverter<List<Message>, String> {
-//
-//
-//        @Override
-//        public String convertToDatabaseColumn(List<Message> value) {
-//            try {
-//                return value != null ? Mapper.getObjectMapper().writeValueAsString(value) : null;
-//            } catch (Exception e) {
-//                throw new RuntimeException("Error converting to JSON", e);
-//            }
-//        }
-//
-//        @Override
-//        public List<Message> convertToEntityAttribute(String dbData) {
-//            try {
-//                return dbData != null ? Mapper.getObjectMapper().readValue(dbData, new TypeReference<LinkedList<Message>>() {}) : null;
-//            } catch (Exception e) {
-//                throw new RuntimeException("Error converting from JSON", e);
-//            }
-//        }
-//    }
 
+    public boolean isDbUser() {
+        return StringUtils.hasText(email);
+    }
 
 }

@@ -18,13 +18,15 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedHeaders("*")
                 .allowedOrigins(allowedOrigins.split(","))
                 .allowedMethods("*");
+        registry.addMapping("/user/**")
+                .allowedHeaders("*")
+                .allowedOrigins(allowedOrigins.split(","))
+                .allowedMethods("*");
     }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/")
-                .addResourceLocations("classpath:/static/index.html");
-        registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/static/");
     }
 }
