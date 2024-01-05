@@ -13,14 +13,11 @@ public class UserResp {
 
     private final List<String> messages;
 
-    private final List<String> plugins;
-
     private final Map<String, Object> properties;
 
     public UserResp(User user) {
         this.gpt4Enable = user.isGpt4Enable();
         this.messages = user.getMessages().stream().map(Message::getContent).toList();
-        this.plugins = user.getPlugins();
         this.properties = user.getProperties();
     }
 
@@ -30,10 +27,6 @@ public class UserResp {
 
     public List<String> getMessages() {
         return messages;
-    }
-
-    public List<String> getPlugins() {
-        return plugins;
     }
 
     public Map<String, Object> getProperties() {

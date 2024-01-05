@@ -1,3 +1,6 @@
+let isLoggedIn = false;
+let gpt4Enable = false;
+
 function isMobileDevice() {
     return navigator.userAgent.match(/Mobile|iP(hone|od|ad)|Android|BlackBerry|IEMobile|Kindle|NetFront|Opera Mini|Windows CE|WebOS|SymbianOS/i);
 }
@@ -11,6 +14,24 @@ function isCookieExists(cookieName) {
         }
     }
     return false;
+}
+
+function showAlert(message) {
+    let alertMessage = document.createElement('div');
+    alertMessage.className = 'alert';
+    alertMessage.textContent = message;
+
+    document.body.appendChild(alertMessage);
+
+    setTimeout(function () {
+        alertMessage.classList.add('show');
+        setTimeout(function () {
+            alertMessage.classList.remove('show');
+            setTimeout(function () {
+                alertMessage.remove();
+            }, 500); // 保持0.5秒的透明度为0状态，以便完成淡出效果
+        }, 3000); // 淡出需要3秒时间
+    }, 0); // 没有延迟立即开始淡入效果
 }
 
 
@@ -64,6 +85,10 @@ const UserService = {
         return Api.post('/user/login', {email: email, password: password, loadHistory: loadHistory});
     },
 
+    logout() {
+        return Api.post('/user/logout');
+    },
+
     exit() {
         ChatService.stop();
         return Api.post('/user/exit');
@@ -74,7 +99,7 @@ const UserService = {
     },
 
     properties(properties) {
-        return Api.post('/user/properties', properties);
+        return Api.put('/user/properties', properties);
     },
 }
 
@@ -106,7 +131,7 @@ let loginRegister = {
         this.loginBox = document.getElementById('loginBox');
 
         this.loginFromBtn = document.getElementById('loginFromBtn');
-        this.loginFromBtn.addEventListener('click', () => this.open());
+        this.loginFromBtn.addEventListener('click', () => !isLoggedIn && this.open());
 
         this.emailInput = document.getElementById('email');
         this.pwdInput = document.getElementById('pwd');
@@ -117,26 +142,6 @@ let loginRegister = {
 
         let closeBtn = this.loginBox.querySelector('.closeBtn');
         closeBtn.addEventListener('click', () => this.close());
-
-        if (isCookieExists('LKSESSIONID')) {
-            UserService.refresh()
-                .then(r => {
-                    if (r.ok) {
-                        loginRegister.close();
-
-                        //加载消息
-                        chat.reset();
-                        r.json().then(user => {
-                            for (let message of user.messages) {
-                                chat.add(message)
-                            }
-                        });
-
-                        //加载设置
-
-                    }
-                });
-        }
     },
     register() {
         let email = this.emailInput.value;
@@ -145,15 +150,15 @@ let loginRegister = {
             UserService.register(email, pwd)
                 .then(r => {
                     if (r.ok) {
-                        //TODO
-                        alert("注册成功")
+                        showAlert("注册成功")
                         loginRegister.close();
+                        isLoggedIn = true;
                     } else {
-                        r.text().then(t => window.alert(t))
+                        r.text().then(t => showAlert(t))
                     }
                 })
                 .catch(e => {
-                    window.alert(e.message)
+                    showAlert(e.message)
                 });
         }
     },
@@ -165,24 +170,19 @@ let loginRegister = {
             UserService.login(email, pwd, loadHistory)
                 .then(r => {
                     if (r.ok) {
+                        showAlert("登录成功")
                         loginRegister.close();
-
-                        //加载消息
+                        isLoggedIn = true;
                         chat.reset();
                         r.json().then(user => {
-                            for (let message of user.messages) {
-                                chat.add(message)
-                            }
+                            loadUser(user);
                         });
-
-                        //加载设置
-
                     } else {
-                        r.text().then(t => window.alert(t))
+                        r.text().then(t => showAlert(t))
                     }
                 })
                 .catch(e => {
-                    window.alert(e.message)
+                    showAlert(e.message)
                 });
         }
     },
@@ -194,10 +194,47 @@ let loginRegister = {
     }
 }
 
+let logout = {
+    logoutBox: null,
+    loginFromBtn: null,
+    init() {
+        this.logoutBox = document.getElementById('logoutBox');
+
+        this.loginFromBtn = document.getElementById('loginFromBtn');
+        this.loginFromBtn.addEventListener('click', () => isLoggedIn && this.open());
+
+        document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
+
+        let closeBtn = this.logoutBox.querySelector('.closeBtn');
+        closeBtn.addEventListener('click', () => this.close());
+    },
+
+    logout() {
+        UserService.logout()
+            .then(r => {
+                if (r.ok) {
+                    logout.close();
+                    isLoggedIn = false;
+                } else {
+                    r.text().then(t => showAlert(t))
+                }
+            })
+            .catch(e => {
+                showAlert(e.message)
+            });
+    },
+    open() {
+        this.logoutBox.style.display = 'flex';
+    },
+    close() {
+        this.logoutBox.style.display = 'none';
+    }
+}
+
 let setting = {
     settingBox: null,
     settingBtn: null,
-    init() {
+    async init() {
         this.settingBox = document.getElementById('settingBox');
 
         this.settingBtn = document.getElementById('settingBtn');
@@ -207,7 +244,7 @@ let setting = {
         closeBtn.addEventListener('click', () => this.close());
 
         this.aiModel.init();
-        this.pluginModel.init();
+        await this.pluginModel.init();
     },
     open() {
         this.settingBox.style.display = 'flex';
@@ -245,7 +282,6 @@ let setting = {
                 }
             }
         }
-        console.log(configMap)
         UserService.properties(configMap);
     },
     aiModel: {
@@ -259,7 +295,7 @@ let setting = {
                     } else {
                         setting.pluginModel.enable('native');
                     }
-                    document.getElementById("gpt4CodeDiv").style.display = aiModelValue === 'gpt4' ? 'block' : 'none';
+                    document.getElementById("gpt4CodeDiv").style.display = aiModelValue === 'gpt4' && !gpt4Enable ? 'block' : 'none';
                 });
             });
             let gpt4CodeDiv = document.getElementById("gpt4CodeDiv");
@@ -270,9 +306,10 @@ let setting = {
                     UserService.validGpt4(gpt4Code)
                         .then(r => {
                             if (r.ok) {
+                                showAlert("验证成功")
                                 gpt4CodeDiv.style.display = 'none';
                             } else {
-                                window.alert("验证失败")
+                                showAlert("验证失败")
                             }
                         });
                 }
@@ -282,31 +319,48 @@ let setting = {
             return document.querySelector('input[name="aiModel"]:checked').value;
         },
 
-        getAiModel(modelName) {
+        getModel(modelName) {
             return document.querySelector('input[name="aiModel"][value="' + modelName + '"]');
         },
 
         disable(modelName) {
-            let model = this.getAiModel(modelName);
+            let model = this.getModel(modelName);
             if (model.checked) {
-                this.getAiModel('gpt3.5').checked = true;
+                this.getModel('gpt3.5').checked = true;
             }
             model.disabled = true;
         },
 
         enable(modelName) {
-            this.getAiModel(modelName).disabled = false;
+            this.getModel(modelName).disabled = false;
         },
     },
     pluginModel: {
         pluginListDiv: null,
         init() {
-            ChatService.plugins().then(r => {
-                if (r.ok) {
-                    this.pluginListDiv = document.getElementById('pluginList');
-                    r.json().then(pluginList => {
-                        console.log(pluginList)
+            this.pluginListDiv = document.getElementById('pluginList');
 
+            let pluginModels = document.querySelectorAll('input[name="pluginModel"]');
+            pluginModels.forEach(tm => {
+                tm.addEventListener('change', () => {
+                    if (this.getValue() === 'native') {
+                        setting.aiModel.disable('tyqw');
+                        setting.aiModel.disable('gemini');
+                    } else {
+                        setting.aiModel.enable('tyqw');
+                        setting.aiModel.enable('gemini');
+                    }
+
+                    if (this.getValue() !== 'none') {
+                        this.pluginListDiv.style.display = 'block';
+                    } else {
+                        this.pluginListDiv.style.display = 'none';
+                    }
+                });
+            });
+            return ChatService.plugins().then(r => {
+                if (r.ok) {
+                    r.json().then(pluginList => {
                         for (let i = 0; i < pluginList.length; i++) {
                             let plugin = pluginList[i];
                             let div = document.createElement('div');
@@ -329,25 +383,6 @@ let setting = {
                     });
                 }
             })
-
-            let pluginModels = document.querySelectorAll('input[name="pluginModel"]');
-            pluginModels.forEach(tm => {
-                tm.addEventListener('change', () => {
-                    if (this.getValue() === 'native') {
-                        setting.aiModel.disable('tyqw');
-                        setting.aiModel.disable('gemini');
-                    } else {
-                        setting.aiModel.enable('tyqw');
-                        setting.aiModel.enable('gemini');
-                    }
-
-                    if (this.getValue() !== 'none') {
-                        this.pluginListDiv.style.display = 'block';
-                    } else {
-                        this.pluginListDiv.style.display = 'none';
-                    }
-                });
-            });
         },
         getValue() {
             return document.querySelector('input[name="pluginModel"]:checked').value;
@@ -403,11 +438,16 @@ let chat = {
         if (!this.chatBox.contains(div)) {
             this.chatBox.insertBefore(div, this.stopBtn);
         }
-        try {
-            div.innerHTML = marked.parse(content);
-        } catch (error) {
-            console.error('marked parse error: ' + content);
-            return;
+
+        if (this.chatBox.querySelectorAll('div').length % 2 === 0) {
+            div.innerText = content;
+        } else {
+            try {
+                div.innerHTML = marked.parse(content);
+            } catch (error) {
+                console.error('marked parse error: ' + content);
+                return;
+            }
         }
 
         div.querySelectorAll('pre code').forEach((el) => {
@@ -473,7 +513,6 @@ let chat = {
         ChatService.question(question)
             .then(async response => {
                 if (!response.ok) {
-                    console.log(response)
                     throw new Error(response.status + ':' + response.statusText);
                 }
 
@@ -569,10 +608,83 @@ let chat = {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    loginRegister.init();
-    setting.init();
-    chat.init();
 
-    window.addEventListener("beforeunload", () => UserService.exit());
+function loadUser(user){
+    //加载消息
+    for (let message of user.messages) {
+        chat.add(message)
+    }
+
+    //加载GPT4设置
+    gpt4Enable = user.gpt4Enable === true;
+    if (user.gpt4Enable === true) {
+        document.getElementById("gpt4CodeDiv").style.display = 'none';
+    }
+
+
+    //加载其他设置
+    let properties = user.properties;
+    if (properties) {
+        //加载AI模型
+        if (properties.aiModel) {
+            let model = setting.aiModel.getModel(properties.aiModel);
+            model.checked = true;
+            model.dispatchEvent(new Event("change", {bubbles: true}));
+        }
+
+        //加载插件模型
+        if (properties.pluginModel) {
+            let model = setting.pluginModel.getModel(properties.pluginModel);
+            model.checked = true;
+            model.dispatchEvent(new Event("change", {bubbles: true}));
+        }
+
+        //加载插件列表
+        let plugins = properties.plugins;
+        if (plugins) {
+            for (let plugin of plugins) {
+                let p = document.getElementById(`plugin-${plugin}`);
+                p.checked = true;
+                p.dispatchEvent(new Event("change", {bubbles: true}));
+            }
+        }
+
+        //加载插件属性
+        for (let key in properties) {
+            if (key.startsWith('plugin-')) {
+                const inputElement = document.querySelector(`input[name="${key}"]`);
+                if (inputElement) {
+                    inputElement.value = properties[key];
+                }
+            }
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    loginRegister.init();
+    logout.init();
+    chat.init();
+    await setting.init();
+
+
+    if (isCookieExists('LKSESSIONID')) {
+        UserService.refresh()
+            .then(r => {
+                if (r.ok) {
+                    showAlert("已自动登录")
+                    loginRegister.close();
+                    isLoggedIn = true;
+
+                    chat.reset();
+                    r.json().then(user => {
+                        loadUser(user);
+                    });
+                }
+            });
+    }
+
+    window.addEventListener("beforeunload", () => {
+        UserService.exit();
+    });
 });

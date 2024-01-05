@@ -26,11 +26,8 @@ public class User extends BaseEntity{
     @Convert(converter = MessageListConverter.class)
     private LinkedList<Message> messages;
 
-    @Convert(converter = ListConverter.class)
-    private final List<String> plugins;
-
     @Convert(converter = MapConverter.class)
-    private final Map<String, Object> properties;
+    private Map<String, Object> properties;
 
     @Transient
     private Status status;
@@ -38,7 +35,6 @@ public class User extends BaseEntity{
     public User() {
         super(UUID.randomUUID());
         this.messages = new LinkedList<>();
-        this.plugins = new ArrayList<>();
         this.properties = new HashMap<>();
         this.status = Status.WAITING;
     }
@@ -67,6 +63,11 @@ public class User extends BaseEntity{
         return getProperty("pluginModel").map(Object::toString).orElse(null);
     }
 
+    @SuppressWarnings("unchecked")
+    public List<String> getPlugins() {
+        return (List<String>) getProperty("plugins").filter(ps -> ps instanceof List).orElse(null);
+    }
+
     @JsonIgnore
     public synchronized Status getStatus() {
         return status;
@@ -88,6 +89,10 @@ public class User extends BaseEntity{
         return properties;
     }
 
+    public void setProperties(Map<String, Object> properties) {
+        this.properties = properties;
+    }
+
     public void putProperty(String key, Object value) {
         this.properties.put(key, value);
     }
@@ -103,10 +108,6 @@ public class User extends BaseEntity{
 
     public void setGpt4Enable(boolean gpt4Enable) {
         this.gpt4Enable = gpt4Enable;
-    }
-
-    public List<String> getPlugins() {
-        return plugins;
     }
 
     public void clear() {

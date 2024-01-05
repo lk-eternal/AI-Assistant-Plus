@@ -26,6 +26,53 @@
     }
 }
 
+.alert {
+    position: fixed;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #fff;
+    padding: 10px;
+    border: 1px solid #ccc;
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    transition: opacity 0.5s, visibility 0s 0.5s ease-in-out;
+}
+
+.alert.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.window{
+    flex-direction: column;
+    position: absolute;
+    width: fit-content;
+    padding: 20px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    background: #2b2b2b;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    .window {
+        width: 100vw;
+        height: 100vh;
+        max-width: unset;
+        max-height: unset;
+        padding: unset;
+        border-radius: unset;
+    }
+}
+
 body {
     display: flex;
     flex-direction: column;
@@ -251,34 +298,11 @@ div .copy-button {
 
 #loginBox {
     display: flex;
-    flex-direction: column;
-    position: absolute;
-    width: fit-content;
     min-width: 20vw;
-    color: white;
-    background: #2b2b2b;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
     #loginBox {
-        width: 100vw;
-        height: 100vh;
-        max-width: unset;
-        max-height: unset;
-        padding: unset;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        transform: unset;
         justify-content: center;
     }
 }
@@ -321,22 +345,33 @@ div .copy-button {
     background-color: white;
 }
 
+#logoutBox{
+    display: none;
+}
+
+#logoutBox .button {
+    display: flex;
+    flex-direction: row;
+}
+
+#logoutBox button {
+    margin: 0 1vw;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+}
+
+#logoutBtn {
+    color: white;
+    background-color: #009688;
+}
+
 #settingBox {
     display: none;
-    position: absolute;
-    width: fit-content;
     min-width: 30vw;
     max-width: 50vw;
     max-height: 50vh;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    background: #2b2b2b;
     padding: 10px 0 20px 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-    z-index: 9999;
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
@@ -393,6 +428,11 @@ div .copy-button {
 
 #gpt4Code {
     width: 40%;
+}
+
+#gpt4CodeValidBtn{
+    width: unset;
+    height: unset;
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {

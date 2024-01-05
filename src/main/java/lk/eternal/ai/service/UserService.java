@@ -26,15 +26,11 @@ public class UserService {
     public User getOrCreateUser(UUID userId) {
         return Optional.ofNullable(userId)
                 .flatMap(userRepository::findById)
-                .orElseGet(() -> {
-                    final var newUser = new User();
-                    userRepository.save(newUser);
-                    return newUser;
-                });
+                .orElseGet(() -> userRepository.save(new User()));
     }
 
-    public void saveUser(User user) {
-        userRepository.save(user);
+    public User saveUser(User user) {
+        return userRepository.save(user);
     }
 
     public Optional<User> getUserByEmail(String email, String password) {

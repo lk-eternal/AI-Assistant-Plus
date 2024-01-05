@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/user")
@@ -44,7 +45,7 @@ public class UserController {
     public UserResp login(@RequestBody RegisterLoginReq req, HttpServletRequest request, HttpServletResponse response) {
         final var user = userService.getUserByEmail(req.email(), req.password())
                 .orElseThrow(() -> new ApiUnauthorizedException("用户名或密码错误"));
-        if(!Boolean.TRUE.equals(req.loadHistory())){
+        if (!Boolean.TRUE.equals(req.loadHistory())) {
             user.clear();
 
             //如果当前有对话则放到用户上
@@ -56,8 +57,22 @@ public class UserController {
                         userService.updateUser(user);
                     });
         }
-        SessionUtil.setSessionId(user, response);
+        SessionUtil.setSessionId(user.getId(), response);
         return new UserResp(user);
+    }
+
+    @PostMapping("logout")
+    public void logout(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        this.userService.getUser(SessionUtil.getSessionId(request))
+                .filter(User::isDbUser)
+                .ifPresent(user -> {
+                    final var newUser = userService.saveUser(new User());
+                    newUser.setMessages(user.getMessages());
+                    newUser.setProperties(user.getProperties());
+                    newUser.setGpt4Enable(user.isGpt4Enable());
+                    userService.updateUser(newUser);
+                    SessionUtil.setSessionId(newUser.getId(), response);
+                });
     }
 
     @PostMapping("exit")
@@ -88,7 +103,7 @@ public class UserController {
         final var sessionId = SessionUtil.getSessionId(request);
         final var user = this.userService.getOrCreateUser(sessionId);
         if (!user.getId().equals(sessionId)) {
-            SessionUtil.setSessionId(user, response);
+            SessionUtil.setSessionId(user.getId(), response);
         }
         return user;
     }

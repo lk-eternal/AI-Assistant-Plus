@@ -4,7 +4,6 @@ package lk.eternal.ai.util;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lk.eternal.ai.domain.User;
 
 import java.util.*;
 
@@ -21,8 +20,8 @@ public class SessionUtil {
                 .orElse(null);
     }
 
-    public static void setSessionId(User user, HttpServletResponse response) {
-        Cookie sessionCookie = new Cookie("LKSESSIONID", user.getId().toString());
+    public static void setSessionId(UUID userId, HttpServletResponse response) {
+        Cookie sessionCookie = new Cookie("LKSESSIONID", userId.toString());
         sessionCookie.setPath("/");
         sessionCookie.setSecure(true);
         sessionCookie.setHttpOnly(false);

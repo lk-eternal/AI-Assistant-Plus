@@ -73,16 +73,27 @@ public class LKController {
         if (pluginModelName.equals("native") && !aiModelName.equals("gpt3.5") && !aiModelName.equals("gpt4")) {
             throw new ApiValidationException("通义千问不支持官方原生工具");
         }
+        final var plugins = Optional.ofNullable(user.getPlugins())
+                .map(ps -> ps.stream().map(this.pluginsMap::get)
+                        .filter(Objects::nonNull)
+                        .toList())
+                .orElseGet(Collections::emptyList);
+        final var aiModel = this.aiModelMap.get(aiModelName);
+
         user.setStatus(User.Status.TYING);
         user.getMessages().addLast(Message.user(questionReq.question()));
+        final var modelRole = aiModel.getModelRole();
+        user.getMessages().stream()
+                .filter(m -> !m.getRole().equals("user") && !m.getRole().equals(modelRole))
+                .forEach(m -> m.setRole(modelRole));
         userService.updateUser(user);
 
         response.setContentType(MediaType.TEXT_EVENT_STREAM_VALUE);
         response.setStatus(HttpStatus.OK.value());
         final var os = response.getOutputStream();
-        this.pluginModelMap.get(pluginModelName).question(this.aiModelMap.get(aiModelName)
+        this.pluginModelMap.get(pluginModelName).question(aiModel
                 , user.getMessages()
-                , user.getPlugins().stream().map(this.pluginsMap::get).filter(Objects::nonNull).toList()
+                , plugins
                 , user::getPluginProperties
                 , () -> user.getStatus() == User.Status.STOPPING, resp -> {
                     try {
@@ -121,7 +132,7 @@ public class LKController {
         final var sessionId = SessionUtil.getSessionId(request);
         final var user = this.userService.getOrCreateUser(sessionId);
         if (!user.getId().equals(sessionId)) {
-            SessionUtil.setSessionId(user, response);
+            SessionUtil.setSessionId(user.getId(), response);
         }
         return user;
     }
