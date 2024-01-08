@@ -247,6 +247,21 @@ let setting = {
         closeBtn.addEventListener('click', () => this.close());
 
         this.aiModel.init();
+
+        const buttons = this.settingBox.querySelectorAll('#config-navigation label');
+        const settings = this.settingBox.querySelectorAll('.setting');
+
+        buttons.forEach(button => {
+            button.addEventListener('click', () => {
+                const settingType = button.getAttribute('data-setting-type');
+                const targetSetting = this.settingBox.querySelector(`div[name="${settingType}"]`)
+
+                settings.forEach(setting => setting.classList.remove('active'));
+
+                targetSetting.scrollIntoView({ behavior: 'smooth' });
+                targetSetting.classList.add('active');
+            });
+        });
         await this.pluginModel.init();
     },
     open() {
@@ -406,6 +421,50 @@ let setting = {
         enable(modelName) {
             this.getModel(modelName).disabled = false;
         },
+    }
+}
+
+let support = {
+    supportBox: null,
+    supportWechatBtn: null,
+    supportAlipayBtn: null,
+    supportWechatImg: null,
+    supportAlipayImg: null,
+    init() {
+        this.supportBox = document.getElementById('supportBox');
+        this.supportWechatImg = document.getElementById('supportWechatImg');
+        this.supportAlipayImg = document.getElementById('supportAlipayImg');
+
+        this.supportWechatBtn = document.getElementById('supportWechatBtn');
+        this.supportWechatBtn.addEventListener('click', () => this.showWechat());
+
+
+        this.supportAlipayBtn = document.getElementById('supportAlipayBtn');
+        this.supportAlipayBtn.addEventListener('click', () => this.showAlipay());
+
+        this.supportAlipayBtn = document.getElementById('supportAlipayBtn');
+
+        let giftBtn = document.getElementById('giftBtn');
+        giftBtn.addEventListener('click', () => this.open());
+
+        let closeBtn = this.supportBox.querySelector('.closeBtn');
+        closeBtn.addEventListener('click', () => this.close());
+
+        this.showWechat();
+    },
+    open() {
+        this.supportBox.style.display = 'flex';
+    },
+    close() {
+        this.supportBox.style.display = 'none';
+    },
+    showWechat(){
+        this.supportWechatImg.style.display = 'flex';
+        this.supportAlipayImg.style.display = 'none';
+    },
+    showAlipay(){
+        this.supportAlipayImg.style.display = 'flex';
+        this.supportWechatImg.style.display = 'none';
     }
 }
 
@@ -664,6 +723,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     loginRegister.init();
     logout.init();
     chat.init();
+    support.init();
     await setting.init();
 
 

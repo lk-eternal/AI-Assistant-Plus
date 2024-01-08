@@ -52,6 +52,7 @@
     flex-direction: column;
     position: absolute;
     width: fit-content;
+    max-height: 50vh;
     padding: 20px;
     top: 50%;
     left: 50%;
@@ -61,16 +62,30 @@
     border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     z-index: 9999;
+    overflow-y: auto;
+}
+
+
+.window .closeBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    cursor: pointer;
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
     .window {
-        width: 100vw;
-        height: 100vh;
+        width: calc(100vw - 10vh);
+        height: calc(100vh - 10vh);
+        padding: 10vh;
         max-width: unset;
         max-height: unset;
-        padding: unset;
         border-radius: unset;
+    }
+
+    .window .closeBtn {
+        top: 10vh;
+        right: 10vh;
     }
 }
 
@@ -142,7 +157,7 @@ button:hover {
     height: 100%;
     border: none;
     overflow-y: auto;
-    padding: 0px 10px 10px 10px;
+    padding: 0 10px 10px 10px;
 }
 
 #chatBox > div {
@@ -185,11 +200,11 @@ button:hover {
 }
 
 #chatBox > div p {
-    margin: 0px;
+    margin: 0;
 }
 
 #chatBox > div ul {
-    margin: 0px;
+    margin: 0;
 }
 
 #chatBox > div pre {
@@ -200,7 +215,6 @@ button:hover {
     border-radius: 5px;
     padding: 10px;
     box-shadow: 2px 2px 5px black;
-    overflow: none;
     white-space: pre-wrap;
     word-wrap: break-word;
 }
@@ -273,7 +287,7 @@ div .copy-button {
     display: flex;
     flex-direction: row;
     width: 100%;
-    padding: 5px 0px 5px 0px;
+    padding: 5px 0 5px 0;
 }
 
 .toolBox button {
@@ -301,12 +315,6 @@ div .copy-button {
     min-width: 20vw;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
-    #loginBox {
-        justify-content: center;
-    }
-}
-
 #loginBox input[type="email"], input[type="password"] {
     width: 100%;
     padding: 12px 20px;
@@ -314,6 +322,7 @@ div .copy-button {
     display: inline-block;
     border: 1px solid #ccc;
     box-sizing: border-box;
+    font-size: 1em;
 }
 
 #loginBox .button {
@@ -326,6 +335,7 @@ div .copy-button {
     border: none;
     cursor: pointer;
     width: 100%;
+    font-size: 1em;
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
@@ -366,63 +376,73 @@ div .copy-button {
     background-color: #009688;
 }
 
-#settingBox {
-    display: none;
-    min-width: 30vw;
-    max-width: 50vw;
-    max-height: 50vh;
-    padding: 10px 0 20px 20px;
+#settingBox .container{
+    display: flex;
+    flex-direction: row;
+}
+
+#settingBox #config-navigation{
+    display: flex;
+    flex-direction: column;
+    padding-right: 10px;
+    border-right: 1px solid #009688;
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
-    #settingBox {
-        width: 100vw;
-        height: 100vh;
-        max-width: unset;
-        max-height: unset;
-        padding: unset;
+    #settingBox #config-navigation{
+        display: none;
     }
 }
 
-#settingBox > div {
-    overflow-y: auto;
-    height: fit-content;
-    max-height: 50vh;
-    width: 100%;
+#settingBox #config-navigation label{
+    cursor: pointer;
+    padding-bottom: 10px;
+}
+
+#settingBox #config-container{
+    display: flex;
     flex-direction: column;
+    padding-left: 10px;
+    overflow-y: auto;
+}
+
+#settingBox #config-container .setting{
+    padding-bottom: 20px;
+}
+
+#settingBox #config-container .setting.active{
+    background-color: grey;
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
     #settingBox > div {
-        width: 100vw;
-        height: 100vh;
         max-height: unset;
-        padding: 0 3vw;
     }
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
-    #settingBox > div > div {
+    #settingBox .setting {
         padding-bottom: 3vw;
     }
 }
 
-#settingBox p {
+#gpt4CodeDiv > *{
     margin: 0 0 0 3vh;
     font-size: 0.75em;
     color: #ccc;
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
-    #settingBox p {
+    #gpt4CodeDiv > * {
         margin: 0 0 0 6vw;
     }
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
-    #settingBox input {
+    #config-container .setting > div > input {
         margin: 0 0 0 3vw;
         height: 3vw;
+        font-size: 1em;
     }
 }
 
@@ -433,6 +453,7 @@ div .copy-button {
 #gpt4CodeValidBtn{
     width: unset;
     height: unset;
+    font-size: 1em;
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
@@ -445,11 +466,33 @@ div .copy-button {
     display: none;
 }
 
-.closeBtn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    cursor: pointer;
+#supportBox {
+    max-height: 100vh;
+}
+
+#supportBox .container{
+    display: flex;
+    flex-direction: column;
+    width: 50vh;
+    height: fit-content;
+}
+
+#supportBox .container .button-group{
+    display: flex;
+}
+
+#supportBox .container .button-group button{
+    width: 50%;
+}
+
+#supportBox .container .image-container{
+    display: flex;
+    flex-direction: row;
+    text-align: center;
+}
+
+#supportBox .container .image-container img{
+    width: 50vh;
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
@@ -464,8 +507,7 @@ div .copy-button {
     flex-direction: row;
     height: 14vh;
     width: -webkit-fill-available;
-    border: 1px solid #ccc;
-    border-width: 1px 0 0 0;
+    border-top: 1px solid #ccc;
     padding: 10px;
     resize: none;
     outline: none;
@@ -485,7 +527,6 @@ div .copy-button {
     font-family: 'Roboto', sans-serif;
     resize: none;
     outline: none;
-    border: none;
     font-size: 1em;
 }
 
