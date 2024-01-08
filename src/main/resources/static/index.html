@@ -137,8 +137,8 @@
             <h2>设置</h2>
             <div class="container">
                 <nav id="config-navigation">
-                    <label data-setting-type="aiModel">语言模型</label>
-                    <label data-setting-type="pluginModel">插件模型</label>
+                    <label data-setting-type="aiModel">AI设置</label>
+                    <label data-setting-type="pluginModel">插件设置</label>
                 </nav>
                 <div id="config-container">
                     <div name="aiModel" class="setting">
@@ -197,11 +197,62 @@
                             <input id="native" class="config" type="radio" name="pluginModel" value="native">
                             <label for="native">插件扩展(官方)</label>
                         </div>
+                        <br>
+                        <div id="pluginList" style="display: block;">
+                            <label>插件列表</label>
+                            <div>
+                                <input id="plugin-calc" class="config" type="checkbox" name="plugins" value="calc">
+                                <label for="plugin-calc">1.计算器</label>
+                                <div class="properties" style="display: none">
+
+                                </div>
+                            </div><div>
+                            <input id="plugin-http" class="config" type="checkbox" name="plugins" value="http">
+                            <label for="plugin-http">2.Web浏览器</label>
+                            <div class="properties" style="display: none">
+
+                            </div>
+                        </div><div>
+                            <input id="plugin-google" class="config" type="checkbox" name="plugins" value="google">
+                            <label for="plugin-google">3.Google搜索</label>
+                            <div class="properties" style="display: none">
+
+                            </div>
+                        </div><div>
+                            <input id="plugin-db" class="config" type="checkbox" name="plugins" value="db">
+                            <label for="plugin-db">4.Postgresql数据库</label>
+                            <div class="properties" style="display: block;">
+
+                                <p>url:<input class="config" name="plugin-db-url"></p>
+
+
+                                <p>username:<input class="config" name="plugin-db-username"></p>
+
+
+                                <p>password:<input class="config" name="plugin-db-password"></p>
+
+                            </div>
+                        </div><div>
+                            <input id="plugin-ssh" class="config" type="checkbox" name="plugins" value="ssh">
+                            <label for="plugin-ssh">5.Shell终端</label>
+                            <div class="properties" style="display: none">
+
+                                <p>host:<input class="config" name="plugin-ssh-host"></p>
+
+
+                                <p>port:<input class="config" name="plugin-ssh-port"></p>
+
+
+                                <p>username:<input class="config" name="plugin-ssh-username"></p>
+
+
+                                <p>password:<input class="config" name="plugin-ssh-password"></p>
+
+                            </div>
+                        </div></div>
                     </div>
 
-                    <div id="pluginList">
-                        <h2>插件列表</h2>
-                    </div>
+
                 </div>
             </div>
         </div>

@@ -432,6 +432,13 @@ div .copy-button {
     }
 }
 
+@media (max-width: 1000px) and (min-height: 800px) {
+    #settingBox input[type="radio"].config,input[type="checkbox"].config {
+        width: 4vw;
+        height: 4vw;
+    }
+}
+
 #gpt4CodeDiv > * {
     margin: 0 0 0 3vh;
     font-size: 0.75em;
@@ -447,8 +454,8 @@ div .copy-button {
 @media (max-width: 1000px) and (min-height: 800px) {
     #config-container .setting > div > input {
         margin: 0 0 0 3vw;
-        height: 3vw;
-        font-size: 1em;
+        width: 4vw;
+        height: 4vw;
     }
 }
 
@@ -471,6 +478,22 @@ div .copy-button {
 #pluginList {
     display: none;
 }
+
+#pluginList > *{
+    margin-left: 6vw;
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    #pluginList .properties p {
+        margin: 0;
+
+    }
+    #pluginList .properties input{
+        width: 30vw;
+        height: 4vw;
+    }
+}
+
 
 #supportBox {
     max-height: 90vh;
