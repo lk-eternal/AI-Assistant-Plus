@@ -1,3 +1,6 @@
+const decoder = new TextDecoder('utf-8');
+const delimiter = '[PACKAGE_END]'
+
 let isLoggedIn = false;
 let gpt4Enable = false;
 
@@ -510,22 +513,18 @@ let chat = {
         respDiv.classList.add('loading');
         this.add('', respDiv);
 
+
         ChatService.question(question)
             .then(async response => {
                 if (!response.ok) {
                     throw new Error(response.status + ':' + response.statusText);
                 }
-
                 this.stopBtn.style.display = "flex";
-
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                const delimiter = '[PACKAGE_END]'
-
+                let reader = response.body.getReader();
                 let data = '';
                 let textValue = '';
                 while (!this.stopReading) {
-                    const {done, value} = await reader.read();
+                    let {done, value} = await reader.read();
                     respDiv.classList.remove('loading');
                     if (done) {
                         break;
@@ -545,7 +544,7 @@ let chat = {
                     }
 
                     for (let i = 0; i < packetSize - 1; i++) {
-                        const packet = packets[i];
+                        let packet = packets[i];
                         let resp;
                         try {
                             resp = JSON.parse(packet);
@@ -652,7 +651,7 @@ function loadUser(user){
         //加载插件属性
         for (let key in properties) {
             if (key.startsWith('plugin-')) {
-                const inputElement = document.querySelector(`input[name="${key}"]`);
+                let inputElement = document.querySelector(`input[name="${key}"]`);
                 if (inputElement) {
                     inputElement.value = properties[key];
                 }

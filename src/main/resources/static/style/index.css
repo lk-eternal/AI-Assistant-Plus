@@ -48,6 +48,7 @@
 }
 
 .window{
+    display: none;
     flex-direction: column;
     position: absolute;
     width: fit-content;
@@ -297,7 +298,6 @@ div .copy-button {
 }
 
 #loginBox {
-    display: flex;
     min-width: 20vw;
 }
 

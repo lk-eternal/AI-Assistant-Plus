@@ -88,7 +88,7 @@ public class LKController {
                 .forEach(m -> m.setRole(modelRole));
         userService.updateUser(user);
 
-        response.setContentType(MediaType.TEXT_EVENT_STREAM_VALUE);
+        response.setContentType(MediaType.TEXT_EVENT_STREAM_VALUE + ";charset=UTF-8");
         response.setStatus(HttpStatus.OK.value());
         final var os = response.getOutputStream();
         this.pluginModelMap.get(pluginModelName).question(aiModel
