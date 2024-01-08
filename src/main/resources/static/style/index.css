@@ -485,6 +485,7 @@ div .copy-button {
 
 #supportBox .container .button-group {
     display: flex;
+    font-size: 1em;
 }
 
 #supportBox .container .button-group button {
@@ -493,7 +494,7 @@ div .copy-button {
 
 @media (max-width: 1000px) and (min-height: 800px) {
     #supportBox .container .button-group button {
-        font-size: 2em;
+        font-size: 1em;
     }
 }
 
