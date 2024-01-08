@@ -47,11 +47,13 @@
     visibility: visible;
 }
 
-.window{
+.window {
     display: none;
     flex-direction: column;
     position: absolute;
     width: fit-content;
+    min-width: 400px;
+    max-width: 20vw;
     max-height: 50vh;
     padding: 20px;
     top: 50%;
@@ -65,7 +67,6 @@
     overflow-y: auto;
 }
 
-
 .window .closeBtn {
     position: absolute;
     top: 20px;
@@ -77,15 +78,16 @@
     .window {
         width: calc(100vw - 10vh);
         height: calc(100vh - 10vh);
-        padding: 10vh;
+        padding: 5vh;
         max-width: unset;
         max-height: unset;
         border-radius: unset;
+        font-size: 1.5em;
     }
 
     .window .closeBtn {
-        top: 10vh;
-        right: 10vh;
+        top: 5vh;
+        right: 5vh;
     }
 }
 
@@ -108,6 +110,17 @@ button:hover {
     transform: scale(1.05);
     transition: all 0.2s;
     cursor: pointer;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: none;
 }
 
 .title {
@@ -311,10 +324,6 @@ div .copy-button {
     }
 }
 
-#loginBox {
-    min-width: 20vw;
-}
-
 #loginBox input[type="email"], input[type="password"] {
     width: 100%;
     padding: 12px 20px;
@@ -355,10 +364,6 @@ div .copy-button {
     background-color: white;
 }
 
-#logoutBox{
-    display: none;
-}
-
 #logoutBox .button {
     display: flex;
     flex-direction: row;
@@ -369,6 +374,7 @@ div .copy-button {
     border: none;
     cursor: pointer;
     width: 100%;
+    font-size: 1em;
 }
 
 #logoutBtn {
@@ -376,12 +382,12 @@ div .copy-button {
     background-color: #009688;
 }
 
-#settingBox .container{
+#settingBox .container {
     display: flex;
     flex-direction: row;
 }
 
-#settingBox #config-navigation{
+#settingBox #config-navigation {
     display: flex;
     flex-direction: column;
     padding-right: 10px;
@@ -389,28 +395,28 @@ div .copy-button {
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {
-    #settingBox #config-navigation{
+    #settingBox #config-navigation {
         display: none;
     }
 }
 
-#settingBox #config-navigation label{
+#settingBox #config-navigation label {
     cursor: pointer;
     padding-bottom: 10px;
 }
 
-#settingBox #config-container{
+#settingBox #config-container {
     display: flex;
     flex-direction: column;
     padding-left: 10px;
     overflow-y: auto;
 }
 
-#settingBox #config-container .setting{
+#settingBox #config-container .setting {
     padding-bottom: 20px;
 }
 
-#settingBox #config-container .setting.active{
+#settingBox #config-container .setting.active {
     background-color: grey;
 }
 
@@ -426,7 +432,7 @@ div .copy-button {
     }
 }
 
-#gpt4CodeDiv > *{
+#gpt4CodeDiv > * {
     margin: 0 0 0 3vh;
     font-size: 0.75em;
     color: #ccc;
@@ -450,7 +456,7 @@ div .copy-button {
     width: 40%;
 }
 
-#gpt4CodeValidBtn{
+#gpt4CodeValidBtn {
     width: unset;
     height: unset;
     font-size: 1em;
@@ -467,32 +473,38 @@ div .copy-button {
 }
 
 #supportBox {
-    max-height: 100vh;
+    max-height: 90vh;
 }
 
-#supportBox .container{
+#supportBox .container {
     display: flex;
     flex-direction: column;
-    width: 50vh;
     height: fit-content;
+    justify-content: center;
 }
 
-#supportBox .container .button-group{
+#supportBox .container .button-group {
     display: flex;
 }
 
-#supportBox .container .button-group button{
+#supportBox .container .button-group button {
     width: 50%;
 }
 
-#supportBox .container .image-container{
+@media (max-width: 1000px) and (min-height: 800px) {
+    #supportBox .container .button-group button {
+        font-size: 2em;
+    }
+}
+
+#supportBox .container .image-container {
     display: flex;
     flex-direction: row;
     text-align: center;
 }
 
-#supportBox .container .image-container img{
-    width: 50vh;
+#supportBox .container .image-container img {
+    width: 100%;
 }
 
 @media (max-width: 1000px) and (min-height: 800px) {

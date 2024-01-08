@@ -37,6 +37,13 @@ function showAlert(message) {
     }, 0); // 没有延迟立即开始淡入效果
 }
 
+function openModal(){
+    document.querySelector('.modal-overlay').style.display = 'block';
+}
+
+function closeModal(){
+    document.querySelector('.modal-overlay').style.display = 'none';
+}
 
 const Api = {
     get(url, params) {
@@ -191,9 +198,11 @@ let loginRegister = {
     },
     open() {
         this.loginBox.style.display = 'flex';
+        openModal();
     },
     close() {
         this.loginBox.style.display = 'none';
+        closeModal();
     }
 }
 
@@ -228,9 +237,11 @@ let logout = {
     },
     open() {
         this.logoutBox.style.display = 'flex';
+        openModal();
     },
     close() {
         this.logoutBox.style.display = 'none';
+        closeModal();
     }
 }
 
@@ -266,10 +277,12 @@ let setting = {
     },
     open() {
         this.settingBox.style.display = 'flex';
+        openModal();
     },
     close() {
         this.settingBox.style.display = 'none';
         this.updateProperties();
+        closeModal();
     },
     updateProperties() {
         let configMap = {};
@@ -454,9 +467,11 @@ let support = {
     },
     open() {
         this.supportBox.style.display = 'flex';
+        openModal();
     },
     close() {
         this.supportBox.style.display = 'none';
+        closeModal();
     },
     showWechat(){
         this.supportWechatImg.style.display = 'flex';
