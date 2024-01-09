@@ -52,7 +52,7 @@ function check_for_updates {
   echo "开始启动应用..."
   cp "$jar_file_path" "$current_dir"
   cd "$current_dir" || exit
-  java $JAVA_TOOL_OPTIONS -jar "$current_dir/$jar_file_name" &
+  sudo bash -c "nohup java $JAVA_TOOL_OPTIONS -jar $current_dir/$jar_file_name >/dev/null 2>&1 &"
   echo "已启动应用"
 
   sleep $check_interval
