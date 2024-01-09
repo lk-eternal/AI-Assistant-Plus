@@ -42,7 +42,7 @@ public class TongYiQianWenAiModel implements AiModel {
         }
         final List<Message> msgs = messages.stream().map(m -> Message.builder().role(m.getRole()).content(m.getContent()).build()).collect(Collectors.toList());
         msgs.forEach(msgManager::add);
-        QwenParam param = QwenParam.builder().model(Generation.Models.QWEN_PLUS)
+        QwenParam param = QwenParam.builder().model(Generation.Models.QWEN_MAX)
                 .messages(msgManager.get())
                 .resultFormat(QwenParam.ResultFormat.MESSAGE)
                 .topP(0.8)
