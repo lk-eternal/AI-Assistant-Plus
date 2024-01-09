@@ -9,6 +9,14 @@ jar_file_name="ai-assistant-plus-0.1.0.jar"
 jar_file_path="$project_dir/target/$jar_file_name"
 check_interval=10
 
+# 检查是否存在Java进程
+java_pids=$(jps -l | grep $jar_file_name | awk '{print $1}')
+# 关闭相关Java进程（如果需要的话）
+for pid in $java_pids; do
+    kill -9 "$pid" > /dev/null 2>&1
+    echo "已关闭相关Java进程。"
+done
+
 function check_for_updates {
   has_update=1
 
