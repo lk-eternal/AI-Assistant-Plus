@@ -102,6 +102,7 @@ public class LKController {
                             os.write(respStr.getBytes());
                             os.write("[PACKAGE_END]".getBytes());
                             os.flush();
+                            response.flushBuffer();
                         }
                     } catch (IOException e) {
                         LOGGER.error("write resp error: {}", e.getMessage(), e);
