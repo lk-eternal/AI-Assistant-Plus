@@ -591,7 +591,8 @@ let chat = {
         ChatService.question(question)
             .then(async response => {
                 if (!response.ok) {
-                    throw new Error(response.status + ':' + response.statusText);
+                    let errMsg = await response.text();
+                    throw new Error(response.status + ':' + errMsg);
                 }
                 this.stopBtn.style.display = "flex";
                 let reader = response.body.getReader();
