@@ -591,3 +591,29 @@ div .copy-button {
 pre code.hljs {
     padding: 0 !important;
 }
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    color: #005cc5;
+    text-align: center;
+    padding: 10px;
+    box-sizing: border-box;
+    z-index: 999;
+}
+
+.footer a:link, a:visited{
+    color: #666;
+}
+
+.footer a:hover{
+    color: #009688;
+}
+
+@media (max-width: 1000px) and (min-height: 800px) {
+    .footer {
+        display: none;
+    }
+}
