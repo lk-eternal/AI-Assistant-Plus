@@ -10,7 +10,7 @@ public class PasswordUtil {
     private static Pbkdf2PasswordEncoder PBKDF2_PASSWORD_ENCODER;
 
     public PasswordUtil(@Value("${app.security.password.secret}") String secret) {
-        PBKDF2_PASSWORD_ENCODER = new Pbkdf2PasswordEncoder(secret, 10000, 256 / 8, Pbkdf2PasswordEncoder.SecretKeyFactoryAlgorithm.PBKDF2WithHmacSHA256);
+        PBKDF2_PASSWORD_ENCODER = new Pbkdf2PasswordEncoder(secret, 10, 1000, Pbkdf2PasswordEncoder.SecretKeyFactoryAlgorithm.PBKDF2WithHmacSHA256);
     }
 
     public static String hashPassword(String rawPassword) {

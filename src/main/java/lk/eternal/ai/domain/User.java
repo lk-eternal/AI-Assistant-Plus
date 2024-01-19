@@ -2,7 +2,6 @@ package lk.eternal.ai.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lk.eternal.ai.domain.converter.ListConverter;
 import lk.eternal.ai.domain.converter.MapConverter;
 import lk.eternal.ai.domain.converter.MessageListConverter;
 import lk.eternal.ai.dto.req.Message;
@@ -14,19 +13,22 @@ import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "lk_users")
-public class User extends BaseEntity{
+public class User extends BaseEntity {
 
     @Column(unique = true)
     private String email;
 
+    @Column(length = 512)
     private String password;
 
     private boolean gpt4Enable;
 
     @Convert(converter = MessageListConverter.class)
+    @Column(columnDefinition = "jsonb")
     private LinkedList<Message> messages;
 
     @Convert(converter = MapConverter.class)
+    @Column(columnDefinition = "jsonb")
     private Map<String, Object> properties;
 
     @Transient
