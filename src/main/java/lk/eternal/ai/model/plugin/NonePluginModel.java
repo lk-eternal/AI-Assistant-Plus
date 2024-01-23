@@ -32,8 +32,7 @@ public class NonePluginModel implements PluginModel {
     @Override
     public void question(AiModel aiModel, LinkedList<Message> messages, List<Plugin> plugins, Function<String, Map<String, Object>> pluginProperties, Supplier<Boolean> stopCheck, Consumer<ChatResp> respConsumer) {
         LOGGER.info("User: {}", messages.getLast().getContent());
-        while (messages.size() > MAX_HISTORY) {
-            messages.removeFirst();
+        while(messages.size() > MAX_HISTORY || messages.get(0).getRole().equals(aiModel.getModelRole())){
             messages.removeFirst();
         }
         try {

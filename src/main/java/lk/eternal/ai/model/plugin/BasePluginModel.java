@@ -32,8 +32,7 @@ public abstract class BasePluginModel implements PluginModel {
                 final GPTResp[] respHolder = {null};
 
                 final var prompt = getPrompt(plugins);
-                while (messages.size() > MAX_HISTORY) {
-                    messages.removeFirst();
+                while(messages.size() > MAX_HISTORY || messages.get(0).getRole().equals(aiModel.getModelRole())){
                     messages.removeFirst();
                 }
                 aiModel.request(prompt, messages, getStops(), getTools(plugins), stopCheck, gptResp -> {
