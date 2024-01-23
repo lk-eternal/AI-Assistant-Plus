@@ -6,6 +6,7 @@ project_dir="/apps/AI-Assistant-Plus"
 jar_file_name="ai-assistant-plus"
 JAVA_OPTS="-Dfile.encoding=UTF-8"
 docker_service_name="lk-ai"
+docker_service_replicas=2
 check_interval=10
 
 function git_clone_or_update {
@@ -39,7 +40,7 @@ function build_docker_image {
 
 function restart_docker_service {
 	version=$1
-	for ((i=1; i<=2; i++)); do
+	for ((i=1; i<=$docker_service_replicas; i++)); do
 		service_name=$docker_service_name-$i;
 		if docker ps -aqf "name=$service_name"; then
 			docker rm -f $service_name
@@ -51,6 +52,10 @@ function restart_docker_service {
 		-p 808$i:8080 \
 		-e JAVA_OPTS="$JAVA_OPTS" \
 		$docker_service_name:$version
+
+		if [ $i -ne $docker_service_replicas ]; then
+			sleep 60
+		fi
 	done
 }
 
