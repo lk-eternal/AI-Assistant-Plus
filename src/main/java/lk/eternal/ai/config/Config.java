@@ -23,6 +23,7 @@ public class Config {
 
                 @Override
                 public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
+                    throw new RuntimeException(ioe);
                 }
             };
         }
