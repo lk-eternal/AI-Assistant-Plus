@@ -21,5 +21,5 @@
 - 通义千问：通义千问,国产之光
 - GPT 3.5：ChatGPT3.5,开山鼻祖
 - GPT 4：ChatGPT4,AGI时代的到来
-
+ 
 ![设置页面展示](setting_show.png)
