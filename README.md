@@ -32,18 +32,11 @@
 ## 展示
 ### [立即使用](https://lk-ai.top)
 
-<div style="text-align: center;">
-<img src="pc.png" width="70%" align="left">
-<img src="mobile.jpg" width="26%" align="right">
-</div>
+![show.png](show.png)
 
 ### 设置
-<img src="setting_show.png">
+![setting_show.png](setting_show.png)
 
 ## 请作者喝杯咖啡吧!
 如果你喜欢这个项目,或者这个项目对你有所帮助.
-
-<div style="text-align: center;">
-<img src="src/main/resources/static/image/support_alipay.jpg" width="48%" align="left">
-<img src="src/main/resources/static/image/support_wechat.jpg" width="48%" align="right">
-</div>
+![support.png](support.png)
