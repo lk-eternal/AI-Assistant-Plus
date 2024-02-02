@@ -30,20 +30,20 @@
 - Google搜索
 
 ## 展示
-<h3>[立即使用](https://lk-ai.top)</h3>
+### [立即使用](https://lk-ai.top)
 
 <div style="text-align: center;">
-
 <img src="pc.png" width="70%" align="left">
-<img src="mobile.jpg" width="30%" align="right">
+<img src="mobile.jpg" width="26%" align="right">
 </div>
 
+### 设置
 <img src="setting_show.png">
 
 ## 请作者喝杯咖啡吧!
 如果你喜欢这个项目,或者这个项目对你有所帮助.
 
 <div style="text-align: center;">
-<img src="src/main/resources/static/image/support_alipay.jpg" width="50%" align="left">
-<img src="src/main/resources/static/image/support_wechat.jpg" width="50%" align="right">
+<img src="src/main/resources/static/image/support_alipay.jpg" width="48%" align="left">
+<img src="src/main/resources/static/image/support_wechat.jpg" width="48%" align="right">
 </div>
