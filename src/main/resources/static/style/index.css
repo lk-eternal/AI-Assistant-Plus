@@ -74,7 +74,7 @@
     cursor: pointer;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     .window {
         width: calc(100vw - 10vh);
         height: calc(100vh - 10vh);
@@ -129,7 +129,7 @@ button:hover {
     color: white;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     .title {
         display: none;
     }
@@ -150,7 +150,7 @@ button:hover {
     border-radius: 10px;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     .content {
         height: -webkit-fill-available;
         width: -webkit-fill-available;
@@ -183,7 +183,7 @@ button:hover {
     box-shadow: 2px 2px 5px #888888;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     #chatBox > div {
         padding: 1.5vw;
         margin: 1vw 0;
@@ -214,6 +214,8 @@ button:hover {
 
 #chatBox > div p {
     margin: 0;
+    overflow: hidden;
+    word-wrap: break-word;
 }
 
 #chatBox > div ul {
@@ -232,7 +234,7 @@ button:hover {
     word-wrap: break-word;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     #chatBox > div pre {
         line-height: 4vw;
         font-size: small;
@@ -274,7 +276,7 @@ div .copy-button {
     cursor: pointer;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     div .copy-button {
         height: 6vw;
         width: 11vw;
@@ -314,7 +316,12 @@ div .copy-button {
     margin: 0 1vh 0 0;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+.toolBox button > svg{
+    width: fit-content;
+    height: fit-content;
+}
+
+@media (max-width: 1000px) {
     .toolBox button {
         width: 10vw;
         height: 10vw;
@@ -347,7 +354,7 @@ div .copy-button {
     font-size: 1em;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     #loadHistory {
         width: 3vw;
         height: 3vw;
@@ -394,7 +401,7 @@ div .copy-button {
     border-right: 1px solid #009688;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     #settingBox #config-navigation {
         display: none;
     }
@@ -420,19 +427,19 @@ div .copy-button {
     background-color: grey;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     #settingBox > div {
         max-height: unset;
     }
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     #settingBox .setting {
         padding-bottom: 3vw;
     }
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     #settingBox input[type="radio"].config,input[type="checkbox"].config {
         width: 4vw;
         height: 4vw;
@@ -445,13 +452,13 @@ div .copy-button {
     color: #ccc;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     #gpt4CodeDiv > * {
         margin: 0 0 0 6vw;
     }
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     #config-container .setting > div > input {
         margin: 0 0 0 3vw;
         width: 4vw;
@@ -469,7 +476,7 @@ div .copy-button {
     font-size: 1em;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     #gpt4Code {
         width: 30vw !important;
     }
@@ -483,7 +490,7 @@ div .copy-button {
     margin-left: 6vw;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     #pluginList .properties p {
         margin: 0;
 
@@ -526,7 +533,7 @@ div .copy-button {
     width: 50%;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     #supportBox .container .button-group button {
         font-size: 1em;
     }
@@ -542,7 +549,7 @@ div .copy-button {
     width: 100%;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     .closeBtn {
         top: 4vw;
         right: 4vw;
@@ -560,7 +567,7 @@ div .copy-button {
     outline: none;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     .inputBox {
         height: 25vw;
     }
@@ -592,7 +599,7 @@ div .copy-button {
     margin-top: auto;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     .inputBox button {
         width: 10vw;
         height: 10vw;
@@ -623,7 +630,7 @@ pre code.hljs {
     color: #009688;
 }
 
-@media (max-width: 1000px) and (min-height: 800px) {
+@media (max-width: 1000px) {
     .footer {
         display: none;
     }
