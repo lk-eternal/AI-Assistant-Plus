@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@Component
+//@Component
 public class DbPlugin implements Plugin {
 
     public DbPlugin() {
