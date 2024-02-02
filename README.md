@@ -29,10 +29,21 @@
 - Web浏览器
 - Google搜索
 
-
 ## 展示
-![pc.png](pc.png)
-![setting_show.png](setting_show.png)
+<h3>[立即使用](https://lk-ai.top)</h3>
 
+<div style="text-align: center;">
 
-![mobile.jpg](mobile.jpg)
+<img src="pc.png" width="70%" align="left">
+<img src="mobile.jpg" width="30%" align="right">
+</div>
+
+<img src="setting_show.png">
+
+## 请作者喝杯咖啡吧!
+如果你喜欢这个项目,或者这个项目对你有所帮助.
+
+<div style="text-align: center;">
+<img src="src/main/resources/static/image/support_alipay.jpg" width="50%" align="left">
+<img src="src/main/resources/static/image/support_wechat.jpg" width="50%" align="right">
+</div>
