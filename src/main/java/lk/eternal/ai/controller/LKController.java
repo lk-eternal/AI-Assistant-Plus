@@ -123,6 +123,9 @@ public class LKController {
     public void clear(HttpServletRequest request) throws IOException {
         this.userService.getUser(SessionUtil.getSessionId(request))
                 .ifPresent(user -> {
+                    if(user.getStatus() == User.Status.TYING){
+                        user.setStatus(User.Status.STOPPING);
+                    }
                     user.clear();
                     userService.updateUser(user);
                 });
